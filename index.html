@@ -6,7 +6,6 @@
     <title>Minimal Digital Clock</title>
     
     <link rel="manifest" href="manifest.json">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="iPad Clock">
@@ -75,14 +74,13 @@
             font-size: 100px;
             line-height: 1;
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.1); 
-            transition: color 0.5s ease;
         }
         
         .colon {
             width: 60px;
             padding-bottom: 10px;
         }
-
+        
         #menu-btn {
             position: fixed;
             bottom: 20px;
@@ -178,18 +176,16 @@
     </div>
 
     <script>
-        // --- 1. PWA Service Worker 등록 ---
+        // 1. PWA Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-                navigator.serviceWorker.register('sw.js').then(function(registration) {
-                    console.log('ServiceWorker registration successful');
-                }, function(err) {
+                navigator.serviceWorker.register('sw.js').catch(function(err) {
                     console.log('ServiceWorker registration failed: ', err);
                 });
             });
         }
 
-        // --- 2. 시계 로직 ---
+        // 2. 시계 로직
         const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
 
         function updateClock() {
@@ -203,7 +199,10 @@
             let h = now.getHours();
             const m = String(now.getMinutes()).padStart(2, '0');
             const s = String(now.getSeconds()).padStart(2, '0');
+            
+            // [수정됨] 오전/오후에 따른 텍스트 및 색상 변경 로직
             const ampmElement = document.getElementById('ampm');
+            
             if (h >= 12) {
                 ampmElement.innerText = '오후';
                 ampmElement.style.color = '#67B2D8'; // 오후 색상 (하늘색)
@@ -211,11 +210,11 @@
                 ampmElement.innerText = '오전';
                 ampmElement.style.color = '#FF937E'; // 오전 색상 (기존 오렌지)
             }
+
             h = h % 12;
             h = h ? h : 12;
             const hStr = String(h).padStart(2, '0');
 
-            document.getElementById('ampm').innerText = ampm;
             document.getElementById('h1').innerText = hStr[0];
             document.getElementById('h2').innerText = hStr[1];
             document.getElementById('m1').innerText = m[0];
@@ -226,7 +225,7 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // --- 3. UI 컨트롤 ---
+        // 3. UI 컨트롤
         const wrapper = document.getElementById('clock-wrapper');
         const sizeRange = document.getElementById('sizeRange');
         const xRange = document.getElementById('xRange');
@@ -249,7 +248,7 @@
         addMultiListener(xRange, 'input change', updateTransform);
         addMultiListener(yRange, 'input change', updateTransform);
 
-        // --- 4. 메뉴 및 화면 유지 ---
+        // 4. 메뉴 및 화면 유지
         const controls = document.getElementById('controls');
         const menuBtn = document.getElementById('menu-btn');
         let isMenuOpen = false;
