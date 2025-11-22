@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Flip Clock Final</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
+    <style>
+        /* 1. 기본 설정 */
+        body {
+            background-color: #000000;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            font-family: -apple-system, sans-serif;
+            -webkit-touch-callout: none; /* iOS 길게 누르기 메뉴 방지 */
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* 2. 시계 래퍼 */
+        #clock-wrapper {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        /* 날짜 */
+        #date-display {
+            color: #bbbbbb;
+            font-size: 40px; 
+            margin-bottom: 20px;
+        }
+
+        /* 시계 컨테이너 */
+        .clock-container {
+            display: flex;
+            align-items: center;
+        }
+
+        /* 오전/오후 */
+        #ampm {
+            color: #ff9500; 
+            font-size: 50px;
+            font-weight: bold;
+            margin-right: 20px;
+            align-self: flex-end;
+            padding-bottom: 15px;
+        }
+
+        .card-group {
+            display: flex;
+            margin: 0 10px; /* 숫자 그룹 간 간격 */
+        }
+
+        .card {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            border-radius: 6px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            width: 100px;
+            height: 140px;
+            font-size: 100px;
+            line-height: 140px; /* 수직 정렬 보정 */
+        }
+
+        /* 가로선 */
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #000000;
+            opacity: 0.4;
+        }
+
+        /* 3. 메뉴 열기 버튼 (우측 하단 고정) */
+        #menu-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(50, 50, 50, 0.5);
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            line-height: 50px;
+            z-index: 200;
+            cursor: pointer;
+            border: 1px solid #555;
+        }
+
+        /* 4. 설정 패널 (호환성 개선) */
+        #controls {
+            display: none; /* 기본 숨김 */
+            position: fixed;
+            bottom: 80px; /* 버튼 위에 뜨게 */
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20, 20, 20, 0.95); /* 투명도 줄임 */
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 300px;
+            border: 1px solid #444;
+            z-index: 300;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #ddd;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        input[type=range] {
+            width: 60%;
+        }
+
+        /* 버튼 스타일 */
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: none;
+            background: #333;
+            color: white;
+            margin-top: 5px;
+        }
+        
+        button.active {
+            background: #007AFF;
+            font-weight: bold;
+        }
+        
+        button#close-btn {
+            background: #555;
+            margin-top: 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="clock-wrapper">
+        <div id="date-display">0000. 00. 00</div>
+        <div class="clock-container">
+            <div id="ampm">AM</div>
+            <div class="card-group">
+                <div class="card" id="h1">1</div>
+                <div class="card" id="h2">2</div>
+            </div>
+            <div class="card-group">
+                <div class="card" id="m1">0</div>
+                <div class="card" id="m2">0</div>
+            </div>
+            <div class="card-group">
+                <div class="card" id="s1">0</div>
+                <div class="card" id="s2">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="menu-btn">⚙️</div>
+
+    <div id="controls">
+        <div class="control-row">
+            <span>크기</span>
+            <input type="range" id="sizeRange" min="0.4" max="2.0" step="0.1" value="1.0">
+        </div>
+        <div class="control-row">
+            <span>가로 (X)</span>
+            <input type="range" id="xRange" min="0" max="100" value="50">
+        </div>
+        <div class="control-row">
+            <span>세로 (Y)</span>
+            <input type="range" id="yRange" min="0" max="100" value="50">
+        </div>
+        
+        <button id="wake-btn" onclick="toggleNoSleep()">화면 켜짐 유지 (OFF)</button>
+        <button id="close-btn" onclick="toggleMenu()">닫기</button>
+    </div>
+
+    <script>
+        // --- 1. 시계 로직 ---
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+        function updateClock() {
+            const now = new Date();
+            
+            // 날짜
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const date = String(now.getDate()).padStart(2, '0');
+            const day = dayNames[now.getDay()];
+            document.getElementById('date-display').innerText = `${year}. ${month}. ${date} ${day}`;
+
+            // 시간
+            let h = now.getHours();
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            const ampm = h >= 12 ? '오후' : '오전';
+            
+            h = h % 12;
+            h = h ? h : 12;
+            const hStr = String(h).padStart(2, '0');
+
+            document.getElementById('ampm').innerText = ampm;
+            document.getElementById('h1').innerText = hStr[0];
+            document.getElementById('h2').innerText = hStr[1];
+            document.getElementById('m1').innerText = m[0];
+            document.getElementById('m2').innerText = m[1];
+            document.getElementById('s1').innerText = s[0];
+            document.getElementById('s2').innerText = s[1];
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- 2. UI 컨트롤 로직 ---
+        const wrapper = document.getElementById('clock-wrapper');
+        const sizeRange = document.getElementById('sizeRange');
+        const xRange = document.getElementById('xRange');
+        const yRange = document.getElementById('yRange');
+
+        // 이벤트 리스너: 'input'과 'change' 둘 다 추가 (구형 호환성)
+        function addMultiListener(element, events, func) {
+            events.split(' ').forEach(e => element.addEventListener(e, func));
+        }
+
+        function updateTransform() {
+            const x = xRange.value;
+            const y = yRange.value;
+            const scale = sizeRange.value;
+            wrapper.style.left = x + '%';
+            wrapper.style.top = y + '%';
+            wrapper.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+        }
+
+        // 구형 브라우저를 위해 input과 change 이벤트 모두 감지
+        addMultiListener(sizeRange, 'input change', updateTransform);
+        addMultiListener(xRange, 'input change', updateTransform);
+        addMultiListener(yRange, 'input change', updateTransform);
+
+
+        // --- 3. 메뉴 열고 닫기 (버튼 방식) ---
+        const controls = document.getElementById('controls');
+        const menuBtn = document.getElementById('menu-btn');
+        let isMenuOpen = false;
+
+        // 메뉴 버튼에 클릭과 터치 이벤트 모두 연결
+        function toggleMenu() {
+            isMenuOpen = !isMenuOpen;
+            if (isMenuOpen) {
+                controls.style.display = 'block';
+                menuBtn.style.display = 'none'; // 열리면 버튼 숨김
+            } else {
+                controls.style.display = 'none';
+                menuBtn.style.display = 'block'; // 닫히면 버튼 보임
+            }
+        }
+        
+        menuBtn.addEventListener('click', toggleMenu);
+        menuBtn.addEventListener('touchstart', function(e){
+            e.preventDefault(); // 더블 클릭 줌 방지
+            toggleMenu();
+        });
+
+
+        // --- 4. 화면 꺼짐 방지 ---
+        const noSleep = new NoSleep();
+        const wakeBtn = document.getElementById('wake-btn');
+        let isWakeLockOn = false;
+
+        function toggleNoSleep() {
+            if (!isWakeLockOn) {
+                noSleep.enable();
+                isWakeLockOn = true;
+                wakeBtn.classList.add('active');
+                wakeBtn.innerText = "화면 켜짐 유지 (ON)";
+            } else {
+                noSleep.disable();
+                isWakeLockOn = false;
+                wakeBtn.classList.remove('active');
+                wakeBtn.innerText = "화면 켜짐 유지 (OFF)";
+            }
+        }
+    </script>
+</body>
+</html>
