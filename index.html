@@ -4,25 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Minimal Digital Clock</title>
+    
+    <link rel="manifest" href="manifest.json">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="iPad Clock">
+    <link rel="apple-touch-icon" href="icon.png">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
     <style>
-        /* 구글 폰트 불러오기 (나눔고딕) */
         @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&display=swap');
-        
-        /* 1. 기본 설정 */
+
         body {
             background-color: #000000;
             margin: 0;
             height: 100vh;
             overflow: hidden;
-            /* 폰트 적용 순서: 나눔고딕 없으면 애플 고딕, 그것도 없으면 기본 산세리프 */
             font-family: "Nanum Gothic", -apple-system, "Apple SD Gothic Neo", sans-serif;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
         }
 
-        /* 2. 시계 래퍼 */
         #clock-wrapper {
             position: absolute;
             top: 50%;
@@ -34,57 +38,48 @@
             white-space: nowrap;
         }
 
-        /* 날짜 */
         #date-display {
             color: #bbbbbb;
             font-size: 30px; 
-            font-weight: 700; /* 조금 더 굵게해서 가독성 확보 */
-            margin-bottom: 30px;
-            letter-spacing: 1px; /* 자간 살짝 띄움 */
+            font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
         }
 
-        /* 시계 컨테이너 */
         .clock-container {
             display: flex;
-            align-items: center; /* 수직 중앙 정렬 */
+            align-items: center;
             justify-content: center;
         }
 
-        /* 오전/오후 */
         #ampm {
             color: #FF937E; 
             font-size: 30px;
             font-weight: 700;
             margin-right: 20px;
-            align-self: flex-end; /* 바닥 라인 맞춤 */
-            padding-bottom: 18px; /* 숫자 바닥과 높이 미세 조정 */
+            align-self: flex-end;
+            padding-bottom: 18px;
         }
 
         .card {
             color: #e0e0e0;
-            /* 배경색 제거됨 */
             position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-weight: 400; /* 굵게 */
-            
-            width: 70px; /* [수정] 60px -> 70px (숫자 겹침 방지) */
+            font-weight: 700;
+            width: 70px;
             height: 100px;
             font-size: 100px;
-            line-height: 1; /* [수정] 높이 충돌 방지 */
-            
-            /* 숫자 텍스트 그림자 (선택사항: 가독성 UP) */
+            line-height: 1;
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.1); 
         }
         
-        /* 콜론(:) 간격은 숫자보다 좁게 */
         .colon {
-            font-weight: 400; 
-            width: 60px;
+            width: 30px;
+            padding-bottom: 10px;
         }
 
-        /* 3. 메뉴 버튼 & 설정 패널 (기존 유지) */
         #menu-btn {
             position: fixed;
             bottom: 20px;
@@ -140,7 +135,6 @@
         }
         button.active { background: #007AFF; font-weight: bold; }
         button#close-btn { background: #555; margin-top: 10px; }
-
     </style>
 </head>
 <body>
@@ -149,17 +143,12 @@
         <div id="date-display">0000. 00. 00</div>
         <div class="clock-container">
             <div id="ampm">AM</div>
-            
             <div class="card" id="h1">1</div>
             <div class="card" id="h2">2</div>
-            
             <div class="card colon">:</div>
-            
             <div class="card" id="m1">0</div>
             <div class="card" id="m2">0</div>
-            
             <div class="card colon">:</div>
-            
             <div class="card" id="s1">0</div>
             <div class="card" id="s2">0</div>
         </div>
@@ -186,25 +175,32 @@
     </div>
 
     <script>
-        // --- 1. 시계 로직 ---
+        // --- 1. PWA Service Worker 등록 ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('sw.js').then(function(registration) {
+                    console.log('ServiceWorker registration successful');
+                }, function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+
+        // --- 2. 시계 로직 ---
         const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
 
         function updateClock() {
             const now = new Date();
-            
-            // 날짜
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const date = String(now.getDate()).padStart(2, '0');
             const day = dayNames[now.getDay()];
             document.getElementById('date-display').innerText = `${year}. ${month}. ${date} ${day}`;
 
-            // 시간
             let h = now.getHours();
             const m = String(now.getMinutes()).padStart(2, '0');
             const s = String(now.getSeconds()).padStart(2, '0');
             const ampm = h >= 12 ? '오후' : '오전';
-            
             h = h % 12;
             h = h ? h : 12;
             const hStr = String(h).padStart(2, '0');
@@ -212,7 +208,6 @@
             document.getElementById('ampm').innerText = ampm;
             document.getElementById('h1').innerText = hStr[0];
             document.getElementById('h2').innerText = hStr[1];
-            // 콜론 업데이트 코드는 제거함 (HTML에 고정)
             document.getElementById('m1').innerText = m[0];
             document.getElementById('m2').innerText = m[1];
             document.getElementById('s1').innerText = s[0];
@@ -221,7 +216,7 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // --- 2. UI 컨트롤 로직 (기존과 동일) ---
+        // --- 3. UI 컨트롤 ---
         const wrapper = document.getElementById('clock-wrapper');
         const sizeRange = document.getElementById('sizeRange');
         const xRange = document.getElementById('xRange');
@@ -244,8 +239,7 @@
         addMultiListener(xRange, 'input change', updateTransform);
         addMultiListener(yRange, 'input change', updateTransform);
 
-
-        // --- 3. 메뉴 열고 닫기 ---
+        // --- 4. 메뉴 및 화면 유지 ---
         const controls = document.getElementById('controls');
         const menuBtn = document.getElementById('menu-btn');
         let isMenuOpen = false;
@@ -262,13 +256,8 @@
         }
         
         menuBtn.addEventListener('click', toggleMenu);
-        menuBtn.addEventListener('touchstart', function(e){
-            e.preventDefault();
-            toggleMenu();
-        });
+        menuBtn.addEventListener('touchstart', function(e){ e.preventDefault(); toggleMenu(); });
 
-
-        // --- 4. 화면 꺼짐 방지 ---
         const noSleep = new NoSleep();
         const wakeBtn = document.getElementById('wake-btn');
         let isWakeLockOn = false;
