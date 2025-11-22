@@ -60,6 +60,7 @@
             align-self: flex-end;
             padding-bottom: 18px;
             -webkit-text-stroke: 1px
+            transition: color 0.5s ease;
         }
 
         .card {
@@ -74,6 +75,7 @@
             font-size: 100px;
             line-height: 1;
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.1); 
+            transition: color 0.5s ease;
         }
         
         .colon {
@@ -201,7 +203,14 @@
             let h = now.getHours();
             const m = String(now.getMinutes()).padStart(2, '0');
             const s = String(now.getSeconds()).padStart(2, '0');
-            const ampm = h >= 12 ? '오후' : '오전';
+            const ampmElement = document.getElementById('ampm');
+            if (h >= 12) {
+                ampmElement.innerText = '오후';
+                ampmElement.style.color = '#67B2D8'; // 오후 색상 (하늘색)
+            } else {
+                ampmElement.innerText = '오전';
+                ampmElement.style.color = '#FF937E'; // 오전 색상 (기존 오렌지)
+            }
             h = h % 12;
             h = h ? h : 12;
             const hStr = String(h).padStart(2, '0');
