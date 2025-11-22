@@ -240,4 +240,52 @@
             wrapper.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
         }
 
-        addMultiListener(sizeRange, 'input change
+        addMultiListener(sizeRange, 'input change', updateTransform);
+        addMultiListener(xRange, 'input change', updateTransform);
+        addMultiListener(yRange, 'input change', updateTransform);
+
+
+        // --- 3. 메뉴 열고 닫기 ---
+        const controls = document.getElementById('controls');
+        const menuBtn = document.getElementById('menu-btn');
+        let isMenuOpen = false;
+
+        function toggleMenu() {
+            isMenuOpen = !isMenuOpen;
+            if (isMenuOpen) {
+                controls.style.display = 'block';
+                menuBtn.style.display = 'none';
+            } else {
+                controls.style.display = 'none';
+                menuBtn.style.display = 'block';
+            }
+        }
+        
+        menuBtn.addEventListener('click', toggleMenu);
+        menuBtn.addEventListener('touchstart', function(e){
+            e.preventDefault();
+            toggleMenu();
+        });
+
+
+        // --- 4. 화면 꺼짐 방지 ---
+        const noSleep = new NoSleep();
+        const wakeBtn = document.getElementById('wake-btn');
+        let isWakeLockOn = false;
+
+        function toggleNoSleep() {
+            if (!isWakeLockOn) {
+                noSleep.enable();
+                isWakeLockOn = true;
+                wakeBtn.classList.add('active');
+                wakeBtn.innerText = "화면 켜짐 유지 (ON)";
+            } else {
+                noSleep.disable();
+                isWakeLockOn = false;
+                wakeBtn.classList.remove('active');
+                wakeBtn.innerText = "화면 켜짐 유지 (OFF)";
+            }
+        }
+    </script>
+</body>
+</html>
