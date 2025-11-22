@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minimal Flip Clock</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
+    <style>
+        /* 1. 기본 설정 */
+        body {
+            background-color: #000000;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* 2. 시계 전체 래퍼 */
+        #clock-wrapper {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            cursor: default;
+            white-space: nowrap;
+        }
+
+        /* 3. 날짜 스타일 */
+        #date-display {
+            color: #bbbbbb;
+            font-size: 40px; 
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+
+        /* 4. 시계 컨테이너 */
+        .clock-container {
+            display: flex;
+            gap: 30px; /* 구분점이 없어진 대신 간격을 넓힘 (15px -> 30px) */
+            align-items: center;
+        }
+
+        /* 오전/오후 표시 */
+        #ampm {
+            color: #ff9500; 
+            font-size: 50px;
+            font-weight: bold;
+            margin-right: 10px;
+            align-self: flex-end;
+            padding-bottom: 15px;
+        }
+
+        .card-group {
+            display: flex;
+            gap: 4px;
+        }
+
+        .card {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            border-radius: 8px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            line-height: 1;
+            width: 100px;
+            height: 140px;
+            font-size: 100px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #000000;
+            opacity: 0.4;
+            transform: translateY(-50%);
+        }
+
+        /* 5. 설정 패널 */
+        #controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20, 20, 20, 0.9);
+            padding: 20px;
+            border-radius: 16px;
+            width: 85%;
+            max-width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+            border: 1px solid #333;
+        }
+
+        #controls.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        input[type=range] {
+            width: 65%;
+            accent-color: #fff;
+        }
+
+        button#wake-btn {
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        
+        button#wake-btn.active {
+            background: #0A84FF;
+            border: none;
+            font-weight: bold;
+        }
+
+        #guide {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            color: #444;
+            font-size: 13px;
+            animation: fadeOut 4s forwards;
+            pointer-events: none;
+        }
+        @keyframes fadeOut { to { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <div id="guide">화면을 터치하면 설정 메뉴가 열립니다</div>
+
+    <div id="clock-wrapper">
+        <div id="date-display">2023. 00. 00 월</div>
+
+        <div class="clock-container">
+            <div id="ampm">오전</div>
+
+            <div class="card-group">
+                <div class="card" id="h1">1</div>
+                <div class="card" id="h2">2</div>
+            </div>
+            
+            <div class="card-group">
+                <div class="card" id="m1">0</div>
+                <div class="card" id="m2">0</div>
+            </div>
+            
+            <div class="card-group">
+                <div class="card" id="s1">0</div>
+                <div class="card" id="s2">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="controls">
+        <div class="control-row">
+            <span>크기 (Size)</span>
+            <input type="range" id="sizeRange" min="0.4" max="2.0" step="0.1" value="1.0">
+        </div>
+        <div class="control-row">
+            <span>가로 위치 (X)</span>
+            <input type="range" id="xRange" min="0" max="100" value="50">
+        </div>
+        <div class="control-row">
+            <span>세로 위치 (Y)</span>
+            <input type="range" id="yRange" min="0" max="100" value="50">
+        </div>
+        <button id="wake-btn" onclick="toggleNoSleep()">화면 켜짐 유지 (터치)</button>
+    </div>
+
+    <script>
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+        function updateClock() {
+            const now = new Date();
+            
+            // 날짜
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const date = String(now.getDate()).padStart(2, '0');
+            const day = dayNames[now.getDay()];
+
+            document.getElementById('date-display').innerText = `${year}. ${month}. ${date} ${day}`;
+
+            // 시간
+            let h = now.getHours();
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+
+            const ampm = h >= 12 ? '오후' : '오전';
+            
+            h = h % 12;
+            h = h ? h : 12;
+            const hStr = String(h).padStart(2, '0');
+
+            document.getElementById('ampm').innerText = ampm;
+            document.getElementById('h1').innerText = hStr[0];
+            document.getElementById('h2').innerText = hStr[1];
+            document.getElementById('m1').innerText = m[0];
+            document.getElementById('m2').innerText = m[1];
+            document.getElementById('s1').innerText = s[0];
+            document.getElementById('s2').innerText = s[1];
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // UI 컨트롤
+        const wrapper = document.getElementById('clock-wrapper');
+        const sizeRange = document.getElementById('sizeRange');
+        const xRange = document.getElementById('xRange');
+        const yRange = document.getElementById('yRange');
+
+        sizeRange.addEventListener('input', updateTransform);
+        xRange.addEventListener('input', updateTransform);
+        yRange.addEventListener('input', updateTransform);
+
+        function updateTransform() {
+            const x = xRange.value;
+            const y = yRange.value;
+            const scale = sizeRange.value;
+            
+            wrapper.style.left = x + '%';
+            wrapper.style.top = y + '%';
+            wrapper.style.transform = `translate(-50%, -50%) scale(${scale})`;
+        }
+
+        // 메뉴 토글
+        const controls = document.getElementById('controls');
+        let menuTimer;
+        document.body.addEventListener('click', (e) => {
+            if(e.target.closest('#controls')) return;
+            controls.classList.toggle('visible');
+            if(controls.classList.contains('visible')) {
+                clearTimeout(menuTimer);
+                menuTimer = setTimeout(() => { controls.classList.remove('visible'); }, 5000);
+            }
+        });
+
+        // 화면 유지
+        const noSleep = new NoSleep();
+        const wakeBtn = document.getElementById('wake-btn');
+        let isWakeLockOn = false;
+
+        function toggleNoSleep() {
+            if (!isWakeLockOn) {
+                noSleep.enable();
+                isWakeLockOn = true;
+                wakeBtn.classList.add('active');
+                wakeBtn.innerText = "화면 켜짐 유지 중 (ON)";
+            } else {
+                noSleep.disable();
+                isWakeLockOn = false;
+                wakeBtn.classList.remove('active');
+                wakeBtn.innerText = "화면 켜짐 유지 (터치)";
+            }
+        }
+    </script>
+</body>
+</html>
