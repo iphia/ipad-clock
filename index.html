@@ -26,7 +26,7 @@
             user-select: none;
         }
 
-        /* --- 1. 페이드 애니메이션 정의 (핵심) --- */
+        /* --- 1. 페이드 애니메이션 정의  --- */
         @keyframes fadeInEffect {
             0% { 
                 opacity: 0.2; 
@@ -43,22 +43,39 @@
             animation: fadeInEffect 0.4s ease-out forwards;
         }
 
-        /* --- 2. 배경 --- */
-        #gradient-bg {
+        /* --- 2. 배경 (크로스페이드용) --- */
+        #crossfade-bg {
             position: absolute;
             top: 50%; left: 50%;
             width: 800px; height: 800px;
             transform: translate(-50%, -50%);
             z-index: 1;
-            opacity: 0.6;
+            opacity: 0.6; /* 전체 투명도 유지 */
+            transform-origin: center;
         }
-
+        
+        .bg-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0; /* 기본적으로 숨김 */
+            transition: opacity 5s ease; /* 핵심: 불투명도 변경 시 부드럽게 전환 */
+        }
+        
+        /* 오전 테마 (주황) */
+        #bg-am .petal {
+            background: radial-gradient(circle, rgba(255, 147, 126, 0.4) 0%, rgba(255, 147, 126, 0) 70%);
+        }
+        /* 오후 테마 (파랑) */
+        #bg-pm .petal {
+            background: radial-gradient(circle, rgba(103, 178, 216, 0.4) 0%, rgba(103, 178, 216, 0) 70%);
+        }
+        
         .petal {
             position: absolute;
             top: 0; left: 0;
-            width: 800px; height: 800px;
+            width: 100%; height: 100%;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(255, 147, 126, 0.4) 0%, rgba(255, 147, 126, 0) 70%);
             mix-blend-mode: screen;
             transform-origin: center;
         }
@@ -89,14 +106,38 @@
             justify-content: center;
         }
 
+        /* --- 3. 시계 UI (수정 사항) --- */
+
+        /* #ampm은 컨테이너 역할만 합니다. */
         #ampm {
-            color: #FF937E; 
-            font-size: 30px; font-weight: 700;
+            position: relative; /* 자식 요소의 absolute 위치 기준점 */
+            width: 50px; /* 글자가 들어갈 공간 확보 (필요에 따라 조정) */
+            height: 30px; /* 글자가 들어갈 공간 확보 */
             margin-right: 20px;
             align-self: flex-end;
             padding-bottom: 18px;
-            transition: color 1s ease;
             text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+        }
+        
+        .ampm-layer {
+            position: absolute;
+            top: 0; left: 0;
+            font-size: 30px; font-weight: 700;
+            white-space: nowrap; /* 글자가 잘리지 않게 */
+            
+            /* 핵심: 불투명도 변경 시 부드럽게 전환 */
+            transition: opacity 5s ease; 
+        }
+        
+        /* 오전 (AM) 스타일 */
+        #ampm-am {
+            color: #FF937E; /* 오전 색상 */
+        }
+        
+        /* 오후 (PM) 스타일 */
+        #ampm-pm {
+            color: #67B2D8; /* 오후 색상 */
+            opacity: 0; /* 초기에는 숨김 */
         }
 
         .card {
@@ -143,14 +184,22 @@
 </head>
 <body>
 
-    <div id="gradient-bg">
-        <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+    <div id="crossfade-bg">
+        <div class="bg-layer" id="bg-am" style="opacity: 1;">
+            <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+        </div>
+        <div class="bg-layer" id="bg-pm">
+            <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+        </div>
     </div>
 
     <div id="clock-wrapper">
         <div id="date-display">0000. 00. 00</div>
         <div class="clock-container">
-            <div id="ampm">AM</div>
+            <div id="ampm">
+                <div class="ampm-layer" id="ampm-am">오전</div>
+                <div class="ampm-layer" id="ampm-pm">오후</div>
+            </div>
             <div class="card" id="h1">1</div>
             <div class="card" id="h2">2</div>
             <div class="card colon">:</div>
@@ -195,59 +244,62 @@
 
         const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
 
-        function updateClock() {
-            const now = new Date();
-            
-            // 날짜
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const date = String(now.getDate()).padStart(2, '0');
-            const day = dayNames[now.getDay()];
-            
-            const dateDisplay = document.getElementById('date-display');
-            if(dateDisplay) dateDisplay.innerText = `${year}. ${month}. ${date} ${day}`;
+function updateClock() {
+    const now = new Date();
+    
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const date = String(now.getDate()).padStart(2, '0');
+    const day = dayNames[now.getDay()];
+    
+    const dateDisplay = document.getElementById('date-display');
+    if(dateDisplay) dateDisplay.innerText = `${year}. ${month}. ${date} ${day}`;
 
-            // 시간 계산
-            let h = now.getHours();
-            const m = String(now.getMinutes()).padStart(2, '0');
-            const s = String(now.getSeconds()).padStart(2, '0');
-            
-            // 테마 변경
-            const ampmElement = document.getElementById('ampm');
-            const petals = document.querySelectorAll('.petal');
-            
-            if (h >= 12) {
-                if(ampmElement && ampmElement.innerText !== '오후') {
-                    ampmElement.innerText = '오후';
-                    ampmElement.style.color = '#67B2D8'; 
-                }
-                petals.forEach(p => p.style.background = 'radial-gradient(circle, rgba(103, 178, 216, 0.4) 0%, rgba(103, 178, 216, 0) 70%)');
-            } else {
-                if(ampmElement && ampmElement.innerText !== '오전') {
-                    ampmElement.innerText = '오전';
-                    ampmElement.style.color = '#FF937E';
-                }
-                petals.forEach(p => p.style.background = 'radial-gradient(circle, rgba(255, 147, 126, 0.4) 0%, rgba(255, 147, 126, 0) 70%)');
-            }
+    let h = now.getHours();
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    
+    // --- AM/PM 및 크로스페이드 로직 ---
+    const ampmElement = document.getElementById('ampm');
+    const bgAm = document.getElementById('bg-am');
+    const bgPm = document.getElementById('bg-pm');
+    const ampmAm = document.getElementById('ampm-am'); 
+    const ampmPm = document.getElementById('ampm-pm'); 
 
-            h = h % 12;
-            h = h ? h : 12;
-            const hStr = String(h).padStart(2, '0');
-
-            // --- 각 숫자에 페이드 효과 적용 ---
-            updateElementWithFade('h1', hStr[0]);
-            updateElementWithFade('h2', hStr[1]);
-            updateElementWithFade('m1', m[0]);
-            updateElementWithFade('m2', m[1]);
-            updateElementWithFade('s1', s[0]);
-            updateElementWithFade('s2', s[1]);
+    if (h >= 12) {
+            // 오후 시간
+            if (bgPm) bgPm.style.opacity = '1';
+            if (bgAm) bgAm.style.opacity = '0';
+            
+            if (ampmPm) ampmPm.style.opacity = '1'; // 오후 글자 나타남
+            if (ampmAm) ampmAm.style.opacity = '0'; // 오전 글자 사라짐
+        } else {
+            // 오전 시간
+            if (bgAm) bgAm.style.opacity = '1';
+            if (bgPm) bgPm.style.opacity = '0';
+            
+            if (ampmAm) ampmAm.style.opacity = '1'; // 오전 글자 나타남
+            if (ampmPm) ampmPm.style.opacity = '0'; // 오후 글자 사라짐
         }
+    
+        h = h % 12;
+        h = h ? h : 12;
+        const hStr = String(h).padStart(2, '0');
+    
+        // --- 각 숫자에 페이드 효과 적용 ---
+        updateElementWithFade('h1', hStr[0]);
+        updateElementWithFade('h2', hStr[1]);
+        updateElementWithFade('m1', m[0]);
+        updateElementWithFade('m2', m[1]);
+        updateElementWithFade('s1', s[0]);
+        updateElementWithFade('s2', s[1]);
+    }
 
         setInterval(updateClock, 1000);
         updateClock();
 
-        // UI 컨트롤 (기존 유지)
-        const breathing = document.getElementById('gradient-bg');
+        // UI 컨트롤
+        const breathing = document.getElementById('crossfade-bg'); 
         const wrapper = document.getElementById('clock-wrapper');
         const sizeRange = document.getElementById('sizeRange');
         const xRange = document.getElementById('xRange');
@@ -285,4 +337,4 @@
         }
     </script>
 </body>
-</html>
+</html> 
