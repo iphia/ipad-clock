@@ -3,46 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minimal Digital Clock</title>
+    <title>Fade Clock</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="iPad Clock">
     <link rel="apple-touch-icon" href="icon.png">
-    <link href="https://hangeul.pstatic.net/hangeul_static/css/nanum-square-round.css" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&display=swap');
+
         body {
             background-color: #000000;
             margin: 0;
             height: 100vh;
             overflow: hidden;
-            font-family: "NanumSquareRound", -apple-system, "Apple SD Gothic Neo", sans-serif;
+            font-family: "Nanum Gothic", -apple-system, sans-serif;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
         }
 
+        /* --- 1. 페이드 애니메이션 정의 (핵심) --- */
+        @keyframes fadeInEffect {
+            0% { 
+                opacity: 0.2; 
+                transform: translateY(5px); /* 살짝 아래에서 올라오는 느낌 */
+            }
+            100% { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        /* 자바스크립트가 이 클래스를 넣었다 뺐다 함 */
+        .fade-animate {
+            animation: fadeInEffect 0.4s ease-out forwards;
+        }
+
+        /* --- 2. 배경 애니메이션 --- */
+        #breathing-bg {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 300px; height: 300px;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .petal {
+            position: absolute;
+            top: 0; left: 0;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 147, 126, 0.4) 0%, rgba(255, 147, 126, 0) 70%);
+            mix-blend-mode: screen;
+            transform-origin: center;
+            animation: breathe 8s ease-in-out infinite;
+            transition: background 1s ease;
+        }
+
+        .petal:nth-child(1) { transform: rotate(0deg) scale(0.5); --r: 0deg; }
+        .petal:nth-child(2) { transform: rotate(60deg) scale(0.5); --r: 60deg; }
+        .petal:nth-child(3) { transform: rotate(120deg) scale(0.5); --r: 120deg; }
+        .petal:nth-child(4) { transform: rotate(180deg) scale(0.5); --r: 180deg; }
+        .petal:nth-child(5) { transform: rotate(240deg) scale(0.5); --r: 240deg; }
+        .petal:nth-child(6) { transform: rotate(300deg) scale(0.5); --r: 300deg; }
+
+        @keyframes breathe {
+            0%, 100% { transform: rotate(var(--r)) scale(0.4); opacity: 0.3; }
+            50% { transform: rotate(var(--r)) scale(1); opacity: 0.8; }
+        }
+
+        /* --- 3. 시계 UI --- */
         #clock-wrapper {
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             display: flex;
             flex-direction: column;
             align-items: center;
             white-space: nowrap;
+            z-index: 10;
         }
 
         #date-display {
-            color: #bbbbbb;
-            font-size: 30px; 
-            font-weight: 700;
+            color: #dddddd;
+            font-size: 30px; font-weight: 700;
             margin-bottom: 20px;
             letter-spacing: 1px;
-            -webkit-text-stroke: 1px
+            text-shadow: 0 2px 5px rgba(0,0,0,0.8);
         }
 
         .clock-container {
@@ -53,92 +106,59 @@
 
         #ampm {
             color: #FF937E; 
-            font-size: 30px;
-            font-weight: 700;
+            font-size: 30px; font-weight: 700;
             margin-right: 20px;
             align-self: flex-end;
             padding-bottom: 18px;
-            -webkit-text-stroke: 1px
-            transition: color 0.5s ease;
+            transition: color 1s ease;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.8);
         }
 
         .card {
-            color: #e0e0e0;
+            color: #ffffff;
             position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: 400;
-            width: 60px;
-            height: 100px;
-            font-size: 100px;
-            line-height: 1;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1); 
+            display: flex; justify-content: center; align-items: center;
+            font-weight: 700;
+            width: 70px; height: 100px;
+            font-size: 100px; line-height: 1;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.8);
+            /* 기본적으로 가속도 사용 설정 (성능 최적화) */
+            will-change: transform, opacity; 
         }
         
-        .colon {
-            width: 60px;
-            padding-bottom: 10px;
-        }
-        
+        .colon { width: 30px; padding-bottom: 10px; }
+
+        /* --- UI 컨트롤 --- */
         #menu-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
+            position: fixed; bottom: 20px; right: 20px;
+            width: 50px; height: 50px;
             background: rgba(50, 50, 50, 0.5);
             border-radius: 50%;
-            color: white;
-            font-size: 24px;
-            text-align: center;
-            line-height: 50px;
-            z-index: 200;
-            cursor: pointer;
-            border: 1px solid #555;
+            color: white; font-size: 24px;
+            text-align: center; line-height: 50px;
+            z-index: 200; cursor: pointer; border: 1px solid #555;
         }
-
         #controls {
             display: none;
-            position: fixed;
-            bottom: 80px;
-            left: 50%;
+            position: fixed; bottom: 80px; left: 50%;
             transform: translateX(-50%);
             background: rgba(20, 20, 20, 0.95);
-            padding: 20px;
-            border-radius: 10px;
-            width: 80%;
-            max-width: 300px;
-            border: 1px solid #444;
-            z-index: 300;
+            padding: 20px; border-radius: 10px;
+            width: 80%; max-width: 300px;
+            border: 1px solid #444; z-index: 300;
         }
-
-        .control-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: #ddd;
-            font-size: 16px;
-            margin-bottom: 15px;
-        }
-
+        .control-row { display: flex; justify-content: space-between; margin-bottom: 15px; color: #ddd; }
         input[type=range] { width: 60%; }
-
-        button {
-            width: 100%;
-            padding: 15px;
-            font-size: 16px;
-            border-radius: 8px;
-            border: none;
-            background: #333;
-            color: white;
-            margin-top: 5px;
-        }
+        button { width: 100%; padding: 15px; border-radius: 8px; border: none; background: #333; color: white; margin-top: 5px; }
         button.active { background: #007AFF; font-weight: bold; }
-        button#close-btn { background: #555; margin-top: 10px; }
     </style>
 </head>
 <body>
+
+    <div id="breathing-bg">
+        <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+        <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+    </div>
 
     <div id="clock-wrapper">
         <div id="date-display">0000. 00. 00</div>
@@ -158,131 +178,120 @@
     <div id="menu-btn">⚙️</div>
 
     <div id="controls">
-        <div class="control-row">
-            <span>크기</span>
-            <input type="range" id="sizeRange" min="0.4" max="2.0" step="0.1" value="1.0">
-        </div>
-        <div class="control-row">
-            <span>가로 (X)</span>
-            <input type="range" id="xRange" min="0" max="100" value="50">
-        </div>
-        <div class="control-row">
-            <span>세로 (Y)</span>
-            <input type="range" id="yRange" min="0" max="100" value="50">
-        </div>
-        
+        <div class="control-row"><span>크기</span><input type="range" id="sizeRange" min="0.4" max="2.0" step="0.1" value="1.0"></div>
+        <div class="control-row"><span>가로</span><input type="range" id="xRange" min="0" max="100" value="50"></div>
+        <div class="control-row"><span>세로</span><input type="range" id="yRange" min="0" max="100" value="50"></div>
         <button id="wake-btn" onclick="toggleNoSleep()">화면 켜짐 유지 (OFF)</button>
         <button id="close-btn" onclick="toggleMenu()">닫기</button>
     </div>
 
     <script>
-        // 1. PWA Service Worker
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('sw.js').catch(function(err) {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
-            });
+            window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(e => console.log(e)));
         }
 
-        // 2. 시계 로직
+        // --- 요소 업데이트 헬퍼 함수 (페이드 효과용) ---
+        function updateElementWithFade(elementId, newValue) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+
+            // 값이 다를 때만 업데이트하고 애니메이션 실행
+            if (el.innerText !== newValue) {
+                el.innerText = newValue;
+                
+                // 애니메이션 리셋 트릭 (클래스 뺐다 끼우기)
+                el.classList.remove('fade-animate');
+                void el.offsetWidth; // 리플로우 강제 (중요: 브라우저가 변경사항을 인지하게 함)
+                el.classList.add('fade-animate');
+            }
+        }
+
         const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
 
         function updateClock() {
             const now = new Date();
+            
+            // 날짜
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const date = String(now.getDate()).padStart(2, '0');
             const day = dayNames[now.getDay()];
-            document.getElementById('date-display').innerText = `${year}. ${month}. ${date} ${day}`;
+            
+            const dateDisplay = document.getElementById('date-display');
+            if(dateDisplay) dateDisplay.innerText = `${year}. ${month}. ${date} ${day}`;
 
+            // 시간 계산
             let h = now.getHours();
             const m = String(now.getMinutes()).padStart(2, '0');
             const s = String(now.getSeconds()).padStart(2, '0');
             
-            // [수정됨] 오전/오후에 따른 텍스트 및 색상 변경 로직
+            // 테마 변경
             const ampmElement = document.getElementById('ampm');
+            const petals = document.querySelectorAll('.petal');
             
             if (h >= 12) {
-                ampmElement.innerText = '오후';
-                ampmElement.style.color = '#67B2D8'; // 오후 색상 (하늘색)
+                if(ampmElement && ampmElement.innerText !== '오후') {
+                    ampmElement.innerText = '오후';
+                    ampmElement.style.color = '#67B2D8'; 
+                }
+                petals.forEach(p => p.style.background = 'radial-gradient(circle, rgba(103, 178, 216, 0.4) 0%, rgba(103, 178, 216, 0) 70%)');
             } else {
-                ampmElement.innerText = '오전';
-                ampmElement.style.color = '#FF937E'; // 오전 색상 (기존 오렌지)
+                if(ampmElement && ampmElement.innerText !== '오전') {
+                    ampmElement.innerText = '오전';
+                    ampmElement.style.color = '#FF937E';
+                }
+                petals.forEach(p => p.style.background = 'radial-gradient(circle, rgba(255, 147, 126, 0.4) 0%, rgba(255, 147, 126, 0) 70%)');
             }
 
             h = h % 12;
             h = h ? h : 12;
             const hStr = String(h).padStart(2, '0');
 
-            document.getElementById('h1').innerText = hStr[0];
-            document.getElementById('h2').innerText = hStr[1];
-            document.getElementById('m1').innerText = m[0];
-            document.getElementById('m2').innerText = m[1];
-            document.getElementById('s1').innerText = s[0];
-            document.getElementById('s2').innerText = s[1];
+            // --- 각 숫자에 페이드 효과 적용 ---
+            updateElementWithFade('h1', hStr[0]);
+            updateElementWithFade('h2', hStr[1]);
+            updateElementWithFade('m1', m[0]);
+            updateElementWithFade('m2', m[1]);
+            updateElementWithFade('s1', s[0]);
+            updateElementWithFade('s2', s[1]);
         }
+
         setInterval(updateClock, 1000);
         updateClock();
 
-        // 3. UI 컨트롤
+        // UI 컨트롤 (기존 유지)
         const wrapper = document.getElementById('clock-wrapper');
         const sizeRange = document.getElementById('sizeRange');
         const xRange = document.getElementById('xRange');
         const yRange = document.getElementById('yRange');
 
-        function addMultiListener(element, events, func) {
-            events.split(' ').forEach(e => element.addEventListener(e, func));
-        }
-
+        function addMultiListener(element, events, func) { events.split(' ').forEach(e => element.addEventListener(e, func)); }
         function updateTransform() {
-            const x = xRange.value;
-            const y = yRange.value;
-            const scale = sizeRange.value;
-            wrapper.style.left = x + '%';
-            wrapper.style.top = y + '%';
-            wrapper.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+            const x = xRange.value; const y = yRange.value; const scale = sizeRange.value;
+            wrapper.style.left = x + '%'; wrapper.style.top = y + '%';
+            wrapper.style.transform = `translate(-50%, -50%) scale(${scale})`;
         }
-
         addMultiListener(sizeRange, 'input change', updateTransform);
         addMultiListener(xRange, 'input change', updateTransform);
         addMultiListener(yRange, 'input change', updateTransform);
 
-        // 4. 메뉴 및 화면 유지
         const controls = document.getElementById('controls');
         const menuBtn = document.getElementById('menu-btn');
         let isMenuOpen = false;
-
         function toggleMenu() {
             isMenuOpen = !isMenuOpen;
-            if (isMenuOpen) {
-                controls.style.display = 'block';
-                menuBtn.style.display = 'none';
-            } else {
-                controls.style.display = 'none';
-                menuBtn.style.display = 'block';
-            }
+            if (isMenuOpen) { controls.style.display = 'block'; menuBtn.style.display = 'none'; }
+            else { controls.style.display = 'none'; menuBtn.style.display = 'block'; }
         }
-        
         menuBtn.addEventListener('click', toggleMenu);
-        menuBtn.addEventListener('touchstart', function(e){ e.preventDefault(); toggleMenu(); });
+        menuBtn.addEventListener('touchstart', (e) => { e.preventDefault(); toggleMenu(); });
 
         const noSleep = new NoSleep();
         const wakeBtn = document.getElementById('wake-btn');
         let isWakeLockOn = false;
-
         function toggleNoSleep() {
-            if (!isWakeLockOn) {
-                noSleep.enable();
-                isWakeLockOn = true;
-                wakeBtn.classList.add('active');
-                wakeBtn.innerText = "화면 켜짐 유지 (ON)";
-            } else {
-                noSleep.disable();
-                isWakeLockOn = false;
-                wakeBtn.classList.remove('active');
-                wakeBtn.innerText = "화면 켜짐 유지 (OFF)";
-            }
+            if (!isWakeLockOn) { noSleep.enable(); isWakeLockOn = true; wakeBtn.classList.add('active'); wakeBtn.innerText = "화면 켜짐 유지 (ON)"; }
+            else { noSleep.disable(); isWakeLockOn = false; wakeBtn.classList.remove('active'); wakeBtn.innerText = "화면 켜짐 유지 (OFF)"; }
         }
     </script>
 </body>
