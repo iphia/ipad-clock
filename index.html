@@ -43,20 +43,20 @@
             animation: fadeInEffect 0.4s ease-out forwards;
         }
 
-        /* --- 2. 배경 애니메이션 --- */
-        #breathing-bg {
+        /* --- 2. 배경 --- */
+        #gradient-bg {
             position: absolute;
             top: 50%; left: 50%;
-            width: 700px; height: 700px;
+            width: 800px; height: 800px;
             transform: translate(-50%, -50%);
             z-index: 1;
-            opacity: 0.4;
+            opacity: 0.6;
         }
 
         .petal {
             position: absolute;
             top: 0; left: 0;
-            width: 700px; height: 700px;
+            width: 800px; height: 800px;
             border-radius: 50%;
             background: radial-gradient(circle, rgba(255, 147, 126, 0.4) 0%, rgba(255, 147, 126, 0) 70%);
             mix-blend-mode: screen;
@@ -143,8 +143,7 @@
 </head>
 <body>
 
-    <div id="breathing-bg">
-        <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+    <div id="gradient-bg">
         <div class="petal"></div><div class="petal"></div><div class="petal"></div>
     </div>
 
@@ -248,7 +247,7 @@
         updateClock();
 
         // UI 컨트롤 (기존 유지)
-        const breathing = document.getElementById('breathing-bg');
+        const breathing = document.getElementById('gradient-bg');
         const wrapper = document.getElementById('clock-wrapper');
         const sizeRange = document.getElementById('sizeRange');
         const xRange = document.getElementById('xRange');
