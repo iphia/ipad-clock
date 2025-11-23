@@ -47,35 +47,20 @@
         #breathing-bg {
             position: absolute;
             top: 50%; left: 50%;
-            width: 300px; height: 300px;
+            width: 800px; height: 800px;
             transform: translate(-50%, -50%);
             z-index: 1;
-            opacity: 0.6;
-            pointer-events: none;
+            opacity: 0.4;
         }
 
         .petal {
             position: absolute;
             top: 0; left: 0;
-            width: 300px; height: 300px;
+            width: 800px; height: 800px;
             border-radius: 50%;
             background: radial-gradient(circle, rgba(255, 147, 126, 0.4) 0%, rgba(255, 147, 126, 0) 70%);
             mix-blend-mode: screen;
             transform-origin: center;
-            animation: breathe 8s ease-in-out infinite;
-            transition: background 1s ease;
-        }
-
-        .petal:nth-child(1) { transform: rotate(0deg) scale(0.5); --r: 0deg; }
-        .petal:nth-child(2) { transform: rotate(60deg) scale(0.5); --r: 60deg; }
-        .petal:nth-child(3) { transform: rotate(120deg) scale(0.5); --r: 120deg; }
-        .petal:nth-child(4) { transform: rotate(180deg) scale(0.5); --r: 180deg; }
-        .petal:nth-child(5) { transform: rotate(240deg) scale(0.5); --r: 240deg; }
-        .petal:nth-child(6) { transform: rotate(300deg) scale(0.5); --r: 300deg; }
-
-        @keyframes breathe {
-            0%, 100% { transform: rotate(var(--r)) scale(4); opacity: 0.2; }
-            50% { transform: rotate(var(--r)) scale(8); opacity: 0.3; }
         }
 
         /* --- 3. 시계 UI --- */
@@ -263,6 +248,7 @@
         updateClock();
 
         // UI 컨트롤 (기존 유지)
+        const breathing = document.getElementById('breathing-bg');
         const wrapper = document.getElementById('clock-wrapper');
         const sizeRange = document.getElementById('sizeRange');
         const xRange = document.getElementById('xRange');
@@ -273,6 +259,8 @@
             const x = xRange.value; const y = yRange.value; const scale = sizeRange.value;
             wrapper.style.left = x + '%'; wrapper.style.top = y + '%';
             wrapper.style.transform = `translate(-50%, -50%) scale(${scale})`;
+            breathing.style.left = x + '%'; breathing.style.top = y + '%';
+            breathing.style.transform = `translate(-50%, -50%) scale(${scale})`;
         }
         addMultiListener(sizeRange, 'input change', updateTransform);
         addMultiListener(xRange, 'input change', updateTransform);
