@@ -36,237 +36,280 @@
                 opacity: 1; 
                 transform: translateY(0); 
             }
-     }
-         
-         .fade-animate {
-             animation: fadeInEffect 0.4s ease-out forwards;
-         }
- 
-         /* --- 2. 배경 (크로스페이드용) --- */
-         #crossfade-bg {
-             position: absolute;
-             top: 50%; left: 50%;
-             width: 800px; height: 800px;
-             transform: translate(-50%, -50%);
-             z-index: 1;
-             opacity: 0.6; /* 전체 투명도 유지 */
-             transform-origin: center;
-         }
-         
-         .bg-layer {
-             position: absolute;
-             top: 0; left: 0;
-             width: 100%; height: 100%;
-             opacity: 0; /* 기본적으로 숨김 */
-             transition: opacity 5s ease; /* 불투명도 변경 시 부드럽게 전환 */
-         }
-         
--        /* 오전 테마 */
--        #bg-am .petal {
--            background: radial-gradient(circle, rgba(103, 178, 216, 0.4) 0%, rgba(103, 178, 216, 0) 70%);
--        }
--        /* 오후 테마 */
--        #bg-pm .petal {
--            background: radial-gradient(circle, rgba(255, 147, 126, 0.4) 0%, rgba(255, 147, 126, 0) 70%);
--        }
--        
-         .petal {
-             position: absolute;
-             top: 0; left: 0;
-             width: 100%; height: 100%;
-             border-radius: 50%;
-             mix-blend-mode: screen;
-             transform-origin: center;
-+            background: radial-gradient(circle, rgba(103, 178, 216, 0.4) 0%, rgba(103, 178, 216, 0) 70%);
-         }
- 
-         /* --- 3. 시계 UI --- */
-         #clock-wrapper {
-             position: absolute;
-             top: 50%; left: 50%;
-             transform: translate(-50%, -50%);
-             display: flex;
-             flex-direction: column;
-             align-items: center;
-             white-space: nowrap;
-             z-index: 10;
-         }
- 
-         #date-display {
-             color: #dddddd;
-             font-size: 30px; font-weight: 700;
-             margin-bottom: 20px;
-             letter-spacing: 1px;
-             text-shadow: 0 2px 5px rgba(0,0,0,0.8);
-         }
- 
-         .clock-container {
-             display: flex;
-             align-items: center;
-@@ -219,94 +211,145 @@
-         <button id="wake-btn" onclick="toggleNoSleep()">화면 켜짐 유지 (OFF)</button>
-         <button id="close-btn" onclick="toggleMenu()">닫기</button>
-     </div>
- 
-     <script>
-         if ('serviceWorker' in navigator) {
-             window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(e => console.log(e)));
-         }
- 
-         // --- 요소 업데이트 헬퍼 함수 (페이드 효과용) ---
-         function updateElementWithFade(elementId, newValue) {
-             const el = document.getElementById(elementId);
-             if (!el) return;
- 
-             // 값이 다를 때만 업데이트하고 애니메이션 실행
-             if (el.innerText !== newValue) {
-                 el.innerText = newValue;
-                 
-                 // 애니메이션 리셋 트릭 (클래스 뺐다 끼우기)
-                 el.classList.remove('fade-animate');
-                 void el.offsetWidth; // 리플로우 강제 (중요: 브라우저가 변경사항을 인지하게 함)
-                 el.classList.add('fade-animate');
-             }
-         }
- 
-+        const hourThemes = [
-+            '103,178,216', // 0
-+            '96,164,209',
-+            '88,149,202',
-+            '83,140,195',
-+            '93,131,189',
-+            '115,125,183',
-+            '146,124,182',
-+            '176,128,184',
-+            '201,132,183',
-+            '216,135,177',
-+            '225,136,168',
-+            '232,136,157',
-+            '238,136,142',
-+            '241,140,125',
-+            '241,150,109',
-+            '236,163,101',
-+            '224,172,103',
-+            '201,177,115',
-+            '168,178,135',
-+            '131,176,158',
-+            '103,170,176',
-+            '92,156,185',
-+            '88,142,189',
-+            '91,133,190'
-+        ];
-+
-         const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
-+        let lastHour = -1;
-+        let activeBgId = 'bg-am';
-+
-+        function setLayerGradient(layer, color) {
-+            if (!layer) return;
-+            const gradient = `radial-gradient(circle, rgba(${color}, 0.4) 0%, rgba(${color}, 0) 70%)`;
-+            layer.querySelectorAll('.petal').forEach(petal => {
-+                petal.style.background = gradient;
-+            });
-+        }
-+
-+        function applyHourTheme(hour, ampmAm, ampmPm) {
-+            const color = hourThemes[hour] || hourThemes[0];
-+            const nextLayerId = activeBgId === 'bg-am' ? 'bg-pm' : 'bg-am';
-+            const nextLayer = document.getElementById(nextLayerId);
-+            const currentLayer = document.getElementById(activeBgId);
-+
-+            setLayerGradient(nextLayer, color);
-+
-+            if (nextLayer) nextLayer.style.opacity = '1';
-+            if (currentLayer) currentLayer.style.opacity = '0';
-+            activeBgId = nextLayerId;
-+
-+            const textColor = `rgb(${color})`;
-+            if (ampmAm) ampmAm.style.color = textColor;
-+            if (ampmPm) ampmPm.style.color = textColor;
-+        }
- 
- function updateClock() {
-     const now = new Date();
--    
-+
-     const year = now.getFullYear();
-     const month = String(now.getMonth() + 1).padStart(2, '0');
-     const date = String(now.getDate()).padStart(2, '0');
-     const day = dayNames[now.getDay()];
--    
-+
-     const dateDisplay = document.getElementById('date-display');
-     if(dateDisplay) dateDisplay.innerText = `${year}. ${month}. ${date} ${day}`;
- 
--    let h = now.getHours();
-+    const hour24 = now.getHours();
-+    let h = hour24;
-     const m = String(now.getMinutes()).padStart(2, '0');
-     const s = String(now.getSeconds()).padStart(2, '0');
--    
-+
-     // --- AM/PM 및 크로스페이드 로직 ---
--    const ampmElement = document.getElementById('ampm');
--    const bgAm = document.getElementById('bg-am');
--    const bgPm = document.getElementById('bg-pm');
--    const ampmAm = document.getElementById('ampm-am'); 
--    const ampmPm = document.getElementById('ampm-pm'); 
-+    const ampmAm = document.getElementById('ampm-am');
-+    const ampmPm = document.getElementById('ampm-pm');
-+
-+    if (hour24 !== lastHour) {
-+        applyHourTheme(hour24, ampmAm, ampmPm);
-+        lastHour = hour24;
-+    }
- 
-     if (h >= 12) {
-             // 오후 시간
--            if (bgPm) bgPm.style.opacity = '1';
--            if (bgAm) bgAm.style.opacity = '0';
--            
-             if (ampmPm) ampmPm.style.opacity = '1'; // 오후 글자 나타남
-             if (ampmAm) ampmAm.style.opacity = '0'; // 오전 글자 사라짐
-         } else {
-             // 오전 시간
--            if (bgAm) bgAm.style.opacity = '1';
--            if (bgPm) bgPm.style.opacity = '0';
--            
-             if (ampmAm) ampmAm.style.opacity = '1'; // 오전 글자 나타남
-             if (ampmPm) ampmPm.style.opacity = '0'; // 오후 글자 사라짐
-         }
--    
-+
-         h = (h === 0 || h === 12) ? h : (h % 12);
--    
-+
-         const hStr = String(h).padStart(2, '0');
--    
-+
-         // --- 각 숫자에 페이드 효과 적용 ---
-         updateElementWithFade('h1', hStr[0]);
-         updateElementWithFade('h2', hStr[1]);
-         updateElementWithFade('m1', m[0]);
-         updateElementWithFade('m2', m[1]);
-         updateElementWithFade('s1', s[0]);
-         updateElementWithFade('s2', s[1]);
-     }
- 
-         setInterval(updateClock, 1000);
-         updateClock();
- 
-         // UI 컨트롤
-         const breathing = document.getElementById('crossfade-bg'); 
-         const wrapper = document.getElementById('clock-wrapper');
-         const sizeRange = document.getElementById('sizeRange');
-         const xRange = document.getElementById('xRange');
-         const yRange = document.getElementById('yRange');
- 
-         function addMultiListener(element, events, func) { events.split(' ').forEach(e => element.addEventListener(e, func)); }
-         function updateTransform() {
-             const x = xRange.value; const y = yRange.value; const scale = sizeRange.value;
-             wrapper.style.left = x + '%'; wrapper.style.top = y + '%';
-             wrapper.style.transform = `translate(-50%, -50%) scale(${scale})`;
-             breathing.style.left = x + '%'; breathing.style.top = y + '%';
+        }
+        
+        .fade-animate {
+            animation: fadeInEffect 0.4s ease-out forwards;
+        }
+
+        /* --- 2. 배경 (크로스페이드용) --- */
+        #crossfade-bg {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 800px; height: 800px;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            opacity: 0.6; /* 전체 투명도 유지 */
+            transform-origin: center;
+        }
+        
+        .bg-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0; /* 기본적으로 숨김 */
+            transition: opacity 5s ease; /* 불투명도 변경 시 부드럽게 전환 */
+        }
+        
+        /* 오전 테마 */
+        #bg-am .petal {
+            background: radial-gradient(circle, rgba(103, 178, 216, 0.4) 0%, rgba(103, 178, 216, 0) 70%);
+        }
+        /* 오후 테마 */
+        #bg-pm .petal {
+            background: radial-gradient(circle, rgba(255, 147, 126, 0.4) 0%, rgba(255, 147, 126, 0) 70%);
+        }
+        
+        .petal {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            mix-blend-mode: screen;
+            transform-origin: center;
+        }
+
+        /* --- 3. 시계 UI --- */
+        #clock-wrapper {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            white-space: nowrap;
+            z-index: 10;
+        }
+
+        #date-display {
+            color: #dddddd;
+            font-size: 30px; font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+        }
+
+        .clock-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- 3. 시계 UI (수정 사항) --- */
+
+        /* #ampm은 컨테이너 역할만 합니다. */
+        #ampm {
+            position: relative; /* 자식 요소의 absolute 위치 기준점 */
+            width: 50px; /* 글자가 들어갈 공간 확보 (필요에 따라 조정) */
+            height: 30px; /* 글자가 들어갈 공간 확보 */
+            margin-right: 20px;
+            align-self: flex-end;
+            padding-bottom: 18px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+        }
+        
+        .ampm-layer {
+            position: absolute;
+            top: 0; left: 0;
+            font-size: 30px; font-weight: 700;
+            white-space: nowrap; /* 글자가 잘리지 않게 */
+            
+            /* 핵심: 불투명도 변경 시 부드럽게 전환 */
+            transition: opacity 5s ease; 
+        }
+        
+        /* 오전 (AM) 스타일 */
+        #ampm-am {
+            color: #67B2D8; /* 오전 색상 */
+        }
+        
+        /* 오후 (PM) 스타일 */
+        #ampm-pm {
+            color: #FF937E; /* 오후 색상 */
+            opacity: 0; /* 초기에는 숨김 */
+        }
+
+        .card {
+            color: #ffffff;
+            position: relative;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: 700;
+            width: 65px; height: 100px;
+            font-size: 100px; line-height: 1;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.8);
+            /* 기본적으로 가속도 사용 설정 (성능 최적화) */
+            will-change: transform, opacity; 
+        }
+        
+        .colon { width: 50px; 
+                padding-bottom: 10px; 
+                font-size: 80px; font-weight: 400; 
+               }
+
+        /* --- UI 컨트롤 --- */
+        #menu-btn {
+            position: fixed; bottom: 20px; right: 20px;
+            width: 50px; height: 50px;
+            background: rgba(50, 50, 50, 0.5);
+            border-radius: 50%;
+            color: white; font-size: 24px;
+            text-align: center; line-height: 50px;
+            z-index: 200; cursor: pointer; border: 1px solid #555;
+        }
+        #controls {
+            display: none;
+            position: fixed; bottom: 80px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20, 20, 20, 0.95);
+            padding: 20px; border-radius: 10px;
+            width: 80%; max-width: 300px;
+            border: 1px solid #444; z-index: 300;
+        }
+        .control-row { display: flex; justify-content: space-between; margin-bottom: 15px; color: #ddd; }
+        input[type=range] { width: 60%; }
+        button { width: 100%; padding: 15px; border-radius: 8px; border: none; background: #333; color: white; margin-top: 5px; }
+        button.active { background: #007AFF; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="crossfade-bg">
+        <div class="bg-layer" id="bg-am" style="opacity: 1;">
+            <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+        </div>
+        <div class="bg-layer" id="bg-pm">
+            <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+        </div>
+    </div>
+
+    <div id="clock-wrapper">
+        <div id="date-display">0000. 00. 00</div>
+        <div class="clock-container">
+            <div id="ampm">
+                <div class="ampm-layer" id="ampm-am">오전</div>
+                <div class="ampm-layer" id="ampm-pm">오후</div>
+            </div>
+            <div class="card" id="h1">1</div>
+            <div class="card" id="h2">2</div>
+            <div class="card colon">:</div>
+            <div class="card" id="m1">0</div>
+            <div class="card" id="m2">0</div>
+            <div class="card colon">:</div>
+            <div class="card" id="s1">0</div>
+            <div class="card" id="s2">0</div>
+        </div>
+    </div>
+
+    <div id="menu-btn">⚙️</div>
+
+    <div id="controls">
+        <div class="control-row"><span>크기</span><input type="range" id="sizeRange" min="0.4" max="2.0" step="0.01" value="1.0"></div>
+        <div class="control-row"><span>가로</span><input type="range" id="xRange" min="0" max="100" value="50"></div>
+        <div class="control-row"><span>세로</span><input type="range" id="yRange" min="0" max="100" value="50"></div>
+        <button id="wake-btn" onclick="toggleNoSleep()">화면 켜짐 유지 (OFF)</button>
+        <button id="close-btn" onclick="toggleMenu()">닫기</button>
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(e => console.log(e)));
+        }
+
+        // --- 요소 업데이트 헬퍼 함수 (페이드 효과용) ---
+        function updateElementWithFade(elementId, newValue) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+
+            // 값이 다를 때만 업데이트하고 애니메이션 실행
+            if (el.innerText !== newValue) {
+                el.innerText = newValue;
+                
+                // 애니메이션 리셋 트릭 (클래스 뺐다 끼우기)
+                el.classList.remove('fade-animate');
+                void el.offsetWidth; // 리플로우 강제 (중요: 브라우저가 변경사항을 인지하게 함)
+                el.classList.add('fade-animate');
+            }
+        }
+
+        const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+
+function updateClock() {
+    const now = new Date();
+    
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const date = String(now.getDate()).padStart(2, '0');
+    const day = dayNames[now.getDay()];
+    
+    const dateDisplay = document.getElementById('date-display');
+    if(dateDisplay) dateDisplay.innerText = `${year}. ${month}. ${date} ${day}`;
+
+    let h = now.getHours();
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    
+    // --- AM/PM 및 크로스페이드 로직 ---
+    const ampmElement = document.getElementById('ampm');
+    const bgAm = document.getElementById('bg-am');
+    const bgPm = document.getElementById('bg-pm');
+    const ampmAm = document.getElementById('ampm-am'); 
+    const ampmPm = document.getElementById('ampm-pm'); 
+
+    if (h >= 12) {
+            // 오후 시간
+            if (bgPm) bgPm.style.opacity = '1';
+            if (bgAm) bgAm.style.opacity = '0';
+            
+            if (ampmPm) ampmPm.style.opacity = '1'; // 오후 글자 나타남
+            if (ampmAm) ampmAm.style.opacity = '0'; // 오전 글자 사라짐
+        } else {
+            // 오전 시간
+            if (bgAm) bgAm.style.opacity = '1';
+            if (bgPm) bgPm.style.opacity = '0';
+            
+            if (ampmAm) ampmAm.style.opacity = '1'; // 오전 글자 나타남
+            if (ampmPm) ampmPm.style.opacity = '0'; // 오후 글자 사라짐
+        }
+    
+        h = (h === 0 || h === 12) ? h : (h % 12);
+    
+        const hStr = String(h).padStart(2, '0');
+    
+        // --- 각 숫자에 페이드 효과 적용 ---
+        updateElementWithFade('h1', hStr[0]);
+        updateElementWithFade('h2', hStr[1]);
+        updateElementWithFade('m1', m[0]);
+        updateElementWithFade('m2', m[1]);
+        updateElementWithFade('s1', s[0]);
+        updateElementWithFade('s2', s[1]);
+    }
+
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // UI 컨트롤
+        const breathing = document.getElementById('crossfade-bg'); 
+        const wrapper = document.getElementById('clock-wrapper');
+        const sizeRange = document.getElementById('sizeRange');
+        const xRange = document.getElementById('xRange');
+        const yRange = document.getElementById('yRange');
+
+        function addMultiListener(element, events, func) { events.split(' ').forEach(e => element.addEventListener(e, func)); }
+        function updateTransform() {
+            const x = xRange.value; const y = yRange.value; const scale = sizeRange.value;
+            wrapper.style.left = x + '%'; wrapper.style.top = y + '%';
+            wrapper.style.transform = `translate(-50%, -50%) scale(${scale})`;
+            breathing.style.left = x + '%'; breathing.style.top = y + '%';
             breathing.style.transform = `translate(-50%, -50%) scale(${scale})`;
         }
         addMultiListener(sizeRange, 'input change', updateTransform);
