@@ -61,11 +61,11 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 1200px;
-      height: 1200px;
+      width: 800px;
+      height: 800px;
       transform: translate(-50%, -50%);
       z-index: 1;
-      opacity: 0.8;
+      opacity: 1;
       transform-origin: center;
     }
 
@@ -76,7 +76,7 @@
       width: 100%;
       height: 100%;
       opacity: 0; /* 기본적으로 숨김 */
-      transition: opacity 20s ease; /* 불투명도 변경 시 부드럽게 전환 */
+      transition: opacity 5s ease; /* 불투명도 변경 시 부드럽게 전환 */
     }
 
     /* 6구간 테마 */
@@ -85,7 +85,7 @@
     #bg-dawn .petal {
       background: radial-gradient(
         circle,
-        rgba(var(--dawn-color), 0.5) 0%,
+        rgba(var(--dawn-color), 0.3) 0%,
         rgba(var(--dawn-color), 0) 70%
       );
     }
@@ -94,7 +94,7 @@
     #bg-morning .petal {
       background: radial-gradient(
         circle,
-        rgba(var(--morning-color), 0.5) 0%,
+        rgba(var(--morning-color), 0.3) 0%,
         rgba(var(--morning-color), 0) 70%
       );
     }
@@ -103,7 +103,7 @@
     #bg-noon .petal {
       background: radial-gradient(
         circle,
-        rgba(var(--noon-color), 0.5) 0%,
+        rgba(var(--noon-color), 0.3) 0%,
         rgba(var(--noon-color), 0) 70%
       );
     }
@@ -112,7 +112,7 @@
     #bg-afternoon .petal {
       background: radial-gradient(
         circle,
-        rgba(var(--afternoon-color), 0.5) 0%,
+        rgba(var(--afternoon-color), 0.3) 0%,
         rgba(var(--afternoon-color), 0) 70%
       );
     }
@@ -121,7 +121,7 @@
     #bg-evening .petal {
       background: radial-gradient(
         circle,
-        rgba(var(--evening-color), 0.5) 0%,
+        rgba(var(--evening-color), 0.3) 0%,
         rgba(var(--evening-color), 0) 70%
       );
     }
@@ -130,7 +130,7 @@
     #bg-night .petal {
       background: radial-gradient(
         circle,
-        rgba(var(--night-color), 0.5) 0%,
+        rgba(var(--night-color), 0.3) 0%,
         rgba(var(--night-color), 0) 70%
       );
     }
@@ -196,7 +196,7 @@
       white-space: nowrap; /* 글자가 잘리지 않게 */
 
       /* 핵심: 불투명도 변경 시 부드럽게 전환 */
-      transition: opacity 20s ease;
+      transition: opacity 5s ease;
     }
 
     /* 6구간 라벨 색상 */
