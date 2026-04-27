@@ -14,17 +14,16 @@
   <meta name="apple-mobile-web-app-title" content="iPad Clock" />
   <link rel="apple-touch-icon" href="icon.png" />
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
-
   <style>
     @import url("https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&display=swap");
 :root {
-  --night-color: 151, 177, 201;
-  --dawn-color: 141, 184, 224;
-  --morning-color: 120, 190, 255;
-  --noon-color: 255, 147, 126;
-  --afternoon-color: 232, 166, 153;
-  --evening-color: 209, 172, 165;
+  /* 낮(Noon) 테마의 밝기 기준으로 모든 시간대의 색상 밝기를 일정하게 통일 */
+  --night-color: 150, 170, 210;      /* 밤: 밝고 부드러운 푸른빛 */
+  --dawn-color: 165, 180, 200;       /* 새벽: 밝은 스틸블루 */
+  --morning-color: 155, 180, 205;    /* 아침: 화사한 하늘빛 */
+  --noon-color: 210, 185, 145;       /* 낮: 베이지 (기준점) */
+  --afternoon-color: 220, 165, 145;  /* 오후: 밝고 차분한 코랄빛 */
+  --evening-color: 190, 165, 185;    /* 저녁: 밝은 라벤더/보랏빛 */
 }
 
     body {
@@ -42,7 +41,7 @@
     @keyframes fadeInEffect {
       0% {
         opacity: 0.2;
-        transform: translateY(5px); /* 살짝 아래에서 올라오는 느낌 */
+        transform: translateY(5px);
       }
       100% {
         opacity: 1;
@@ -55,14 +54,13 @@
     }
 
     /* --- 2. 배경 (크로스페이드용) --- */
-
-    /* --- crossfade 배경 컨테이너 (필수) --- */
     #crossfade-bg {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 800px;
-      height: 800px;
+      /* 배경 원 크기를 800px에서 600px로 줄임 */
+      width: 600px;
+      height: 600px;
       transform: translate(-50%, -50%);
       z-index: 1;
       opacity: 1;
@@ -75,64 +73,28 @@
       left: 0;
       width: 100%;
       height: 100%;
-      opacity: 0; /* 기본적으로 숨김 */
-      transition: opacity 5s ease; /* 불투명도 변경 시 부드럽게 전환 */
+      opacity: 0;
+      transition: opacity 5s ease;
     }
 
     /* 6구간 테마 */
-
-    /* 새벽(이른 아침 전) */
     #bg-dawn .petal {
-      background: radial-gradient(
-        circle,
-        rgba(var(--dawn-color), 0.3) 0%,
-        rgba(var(--dawn-color), 0) 70%
-      );
+      background: radial-gradient(circle, rgba(var(--dawn-color), 0.3) 0%, rgba(var(--dawn-color), 0) 70%);
     }
-
-    /* 아침 */
     #bg-morning .petal {
-      background: radial-gradient(
-        circle,
-        rgba(var(--morning-color), 0.3) 0%,
-        rgba(var(--morning-color), 0) 70%
-      );
+      background: radial-gradient(circle, rgba(var(--morning-color), 0.3) 0%, rgba(var(--morning-color), 0) 70%);
     }
-
-    /* 낮 */
     #bg-noon .petal {
-      background: radial-gradient(
-        circle,
-        rgba(var(--noon-color), 0.3) 0%,
-        rgba(var(--noon-color), 0) 70%
-      );
+      background: radial-gradient(circle, rgba(var(--noon-color), 0.3) 0%, rgba(var(--noon-color), 0) 70%);
     }
-
-    /* 오후(따뜻한 톤) */
     #bg-afternoon .petal {
-      background: radial-gradient(
-        circle,
-        rgba(var(--afternoon-color), 0.3) 0%,
-        rgba(var(--afternoon-color), 0) 70%
-      );
+      background: radial-gradient(circle, rgba(var(--afternoon-color), 0.3) 0%, rgba(var(--afternoon-color), 0) 70%);
     }
-
-    /* 저녁 */
     #bg-evening .petal {
-      background: radial-gradient(
-        circle,
-        rgba(var(--evening-color), 0.3) 0%,
-        rgba(var(--evening-color), 0) 70%
-      );
+      background: radial-gradient(circle, rgba(var(--evening-color), 0.3) 0%, rgba(var(--evening-color), 0) 70%);
     }
-
-    /* 밤 */
     #bg-night .petal {
-      background: radial-gradient(
-        circle,
-        rgba(var(--night-color), 0.3) 0%,
-        rgba(var(--night-color), 0) 70%
-      );
+      background: radial-gradient(circle, rgba(var(--night-color), 0.3) 0%, rgba(var(--night-color), 0) 70%);
     }
 
     .petal {
@@ -174,13 +136,10 @@
       justify-content: center;
     }
 
-    /* --- 3. 시계 UI (수정 사항) --- */
-
-    /* #ampm은 컨테이너 역할만 합니다. */
     #ampm {
-      position: relative; /* 자식 요소의 absolute 위치 기준점 */
-      width: 50px; /* 글자가 들어갈 공간 확보 (필요에 따라 조정) */
-      height: 30px; /* 글자가 들어갈 공간 확보 */
+      position: relative;
+      width: 50px;
+      height: 30px;
       margin-right: 20px;
       align-self: flex-end;
       padding-bottom: 18px;
@@ -193,31 +152,17 @@
       left: 0;
       font-size: 30px;
       font-weight: 700;
-      white-space: nowrap; /* 글자가 잘리지 않게 */
-
-      /* 핵심: 불투명도 변경 시 부드럽게 전환 */
+      white-space: nowrap;
       transition: opacity 5s ease;
     }
 
     /* 6구간 라벨 색상 */
-    #label-dawn {
-      color: rgba(var(--dawn-color), 0.95);
-    }
-    #label-morning {
-      color: rgba(var(--morning-color), 0.95);
-    }
-    #label-noon {
-      color: rgba(var(--noon-color), 0.95);
-    }
-    #label-afternoon {
-      color: rgba(var(--afternoon-color), 0.95);
-    }
-    #label-evening {
-      color: rgba(var(--evening-color), 0.95);
-    }
-    #label-night {
-      color: rgba(var(--night-color), 0.95);
-    }
+    #label-dawn { color: rgba(var(--dawn-color), 0.95); }
+    #label-morning { color: rgba(var(--morning-color), 0.95); }
+    #label-noon { color: rgba(var(--noon-color), 0.95); }
+    #label-afternoon { color: rgba(var(--afternoon-color), 0.95); }
+    #label-evening { color: rgba(var(--evening-color), 0.95); }
+    #label-night { color: rgba(var(--night-color), 0.95); }
 
     .card {
       color: #ffffff;
@@ -231,7 +176,6 @@
       font-size: 100px;
       line-height: 1;
       text-shadow: 0 4px 10px rgba(0, 0, 0, 0.8);
-      /* 기본적으로 가속도 사용 설정 (성능 최적화) */
       will-change: transform, opacity;
     }
 
@@ -295,11 +239,6 @@
       color: white;
       margin-top: 5px;
     }
-
-    button.active {
-      background: #007aff;
-      font-weight: bold;
-    }
   </style>
 </head>
 
@@ -310,31 +249,26 @@
       <div class="petal"></div>
       <div class="petal"></div>
     </div>
-
     <div class="bg-layer" id="bg-morning">
       <div class="petal"></div>
       <div class="petal"></div>
       <div class="petal"></div>
     </div>
-
     <div class="bg-layer" id="bg-noon">
       <div class="petal"></div>
       <div class="petal"></div>
       <div class="petal"></div>
     </div>
-
     <div class="bg-layer" id="bg-afternoon">
       <div class="petal"></div>
       <div class="petal"></div>
       <div class="petal"></div>
     </div>
-
     <div class="bg-layer" id="bg-evening">
       <div class="petal"></div>
       <div class="petal"></div>
       <div class="petal"></div>
     </div>
-
     <div class="bg-layer" id="bg-night">
       <div class="petal"></div>
       <div class="petal"></div>
@@ -344,7 +278,6 @@
 
   <div id="clock-wrapper">
     <div id="date-display">0000. 00. 00</div>
-
     <div class="clock-container">
       <div id="ampm">
         <div class="ampm-layer" id="label-dawn" style="opacity: 1">오전</div>
@@ -354,7 +287,6 @@
         <div class="ampm-layer" id="label-evening">오후</div>
         <div class="ampm-layer" id="label-night">오전</div>
       </div>
-
       <div class="card" id="h1">1</div>
       <div class="card" id="h2">2</div>
       <div class="card colon">:</div>
@@ -371,27 +303,16 @@
   <div id="controls">
     <div class="control-row">
       <span>크기</span>
-      <input
-        type="range"
-        id="sizeRange"
-        min="0.4"
-        max="2.0"
-        step="0.01"
-        value="1.0"
-      />
+      <input type="range" id="sizeRange" min="0.4" max="2.0" step="0.01" value="1.0" />
     </div>
-
     <div class="control-row">
       <span>가로</span>
       <input type="range" id="xRange" min="0" max="100" value="50" />
     </div>
-
     <div class="control-row">
       <span>세로</span>
       <input type="range" id="yRange" min="0" max="100" value="50" />
     </div>
-
-    <button id="wake-btn" onclick="toggleNoSleep()">화면 켜짐 유지 (OFF)</button>
     <button id="close-btn" onclick="toggleMenu()">닫기</button>
   </div>
 
@@ -402,18 +323,19 @@
       );
     }
 
-    // --- 요소 업데이트 헬퍼 함수 (페이드 효과용) ---
+    // --- [테스트용 변수] ---
+    // 현재 시간에 더할 시간(시 단위)을 여기에 입력해! 
+    // 예: 5를 입력하면 현재 시간보다 5시간 뒤의 테마와 시간이 나옴. (음수도 가능)
+    const timeOffsetHours = 0; 
+
     function updateElementWithFade(elementId, newValue) {
       const el = document.getElementById(elementId);
       if (!el) return;
 
-      // 값이 다를 때만 업데이트하고 애니메이션 실행
       if (el.innerText !== newValue) {
         el.innerText = newValue;
-
-        // 애니메이션 리셋 트릭 (클래스 뺐다 끼우기)
         el.classList.remove("fade-animate");
-        void el.offsetWidth; // 리플로우 강제 (중요: 브라우저가 변경사항을 인지하게 함)
+        void el.offsetWidth;
         el.classList.add("fade-animate");
       }
     }
@@ -421,7 +343,11 @@
     const dayNames = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
 
     function updateClock() {
-     const now = new Date();
+      const now = new Date();
+      
+      // 테스트용 오프셋 적용
+      now.setHours(now.getHours() + timeOffsetHours);
+
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, "0");
       const date = String(now.getDate()).padStart(2, "0");
@@ -434,7 +360,6 @@
       const m = String(now.getMinutes()).padStart(2, "0");
       const s = String(now.getSeconds()).padStart(2, "0");
 
-      // --- 6구간 크로스페이드 로직 ---
       const bgIds = ["bg-dawn", "bg-morning", "bg-noon", "bg-afternoon", "bg-evening", "bg-night"];
 
       function getThemeIdByHour(hour) {
@@ -453,7 +378,6 @@
         el.style.opacity = id === activeId ? "1" : "0";
       });
 
-      // --- 6구간 라벨 크로스페이드 (배경과 동기화) ---
       const labelMap = {
         "bg-dawn": "label-dawn",
         "bg-morning": "label-morning",
@@ -470,10 +394,8 @@
       });
 
       h = h === 0 || h === 12 ? h : h % 12;
-
       const hStr = String(h).padStart(2, "0");
 
-      // --- 각 숫자에 페이드 효과 적용 ---
       updateElementWithFade("h1", hStr[0]);
       updateElementWithFade("h2", hStr[1]);
       updateElementWithFade("m1", m[0]);
@@ -485,12 +407,17 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // UI 컨트롤
+    // UI 컨트롤 및 설정 저장 로직
     const breathing = document.getElementById("crossfade-bg");
     const wrapper = document.getElementById("clock-wrapper");
     const sizeRange = document.getElementById("sizeRange");
     const xRange = document.getElementById("xRange");
     const yRange = document.getElementById("yRange");
+
+    // 저장된 설정 불러오기
+    if(localStorage.getItem('clockSize')) sizeRange.value = localStorage.getItem('clockSize');
+    if(localStorage.getItem('clockX')) xRange.value = localStorage.getItem('clockX');
+    if(localStorage.getItem('clockY')) yRange.value = localStorage.getItem('clockY');
 
     function addMultiListener(element, events, func) {
       events.split(" ").forEach((e) => element.addEventListener(e, func));
@@ -508,7 +435,15 @@
       breathing.style.left = x + "%";
       breathing.style.top = y + "%";
       breathing.style.transform = `translate(-50%, -50%) scale(${scale})`;
+
+      // 설정값 브라우저에 저장
+      localStorage.setItem('clockSize', scale);
+      localStorage.setItem('clockX', x);
+      localStorage.setItem('clockY', y);
     }
+
+    // 초기 적용
+    updateTransform();
 
     addMultiListener(sizeRange, "input change", updateTransform);
     addMultiListener(xRange, "input change", updateTransform);
@@ -520,7 +455,6 @@
 
     function toggleMenu() {
       isMenuOpen = !isMenuOpen;
-
       if (isMenuOpen) {
         controls.style.display = "block";
         menuBtn.style.display = "none";
@@ -535,24 +469,6 @@
       e.preventDefault();
       toggleMenu();
     });
-
-    const noSleep = new NoSleep();
-    const wakeBtn = document.getElementById("wake-btn");
-    let isWakeLockOn = false;
-
-    function toggleNoSleep() {
-      if (!isWakeLockOn) {
-        noSleep.enable();
-        isWakeLockOn = true;
-        wakeBtn.classList.add("active");
-        wakeBtn.innerText = "화면 켜짐 유지 (ON)";
-      } else {
-        noSleep.disable();
-        isWakeLockOn = false;
-        wakeBtn.classList.remove("active");
-        wakeBtn.innerText = "화면 켜짐 유지 (OFF)";
-      }
-    }
   </script>
 </body>
 </html>
