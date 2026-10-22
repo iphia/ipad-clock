@@ -201,7 +201,7 @@
     /* --- UI 컨트롤 --- */
     #menu-btn {
       position: fixed;
-      bottom: 20px;
+      top: 20px;
       right: 20px;
       width: 50px;
       height: 50px;
@@ -210,7 +210,15 @@
       color: white;
       font-size: 24px;
       text-align: center;
-      line-height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
+      touch-action: none;
+      -webkit-appearance: none;
+      appearance: none;
       z-index: 200;
       cursor: pointer;
       border: 1px solid #555;
@@ -310,7 +318,13 @@
     </div>
   </div>
 
-  <div id="menu-btn">⚙️</div>
+  <button id="menu-btn" type="button" aria-label="설정 열기" aria-controls="controls" aria-expanded="false" title="설정 · 드래그하여 이동">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" style="pointer-events: none">
+      <path d="M4 7h16M4 17h16" />
+      <circle cx="9" cy="7" r="2.5" fill="#222" />
+      <circle cx="15" cy="17" r="2.5" fill="#222" />
+    </svg>
+  </button>
 
   <div id="controls">
     <div class="control-row">
@@ -476,18 +490,94 @@
 
     function toggleMenu() {
       isMenuOpen = !isMenuOpen;
+      menuBtn.setAttribute("aria-expanded", String(isMenuOpen));
       if (isMenuOpen) {
         controls.style.display = "block";
         menuBtn.style.display = "none";
       } else {
         controls.style.display = "none";
-        menuBtn.style.display = "block";
+        menuBtn.style.display = "flex";
+        menuBtn.focus();
       }
     }
 
-    menuBtn.addEventListener("click", toggleMenu);
-    menuBtn.addEventListener("touchstart", (e) => {
-      e.preventDefault();
+    // Store a relative position so it remains visible after iPad rotation.
+    const menuPositionKey = "clockMenuPosition";
+    let menuPosition = null;
+    try {
+      const saved = JSON.parse(localStorage.getItem(menuPositionKey));
+      if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)) {
+        menuPosition = saved;
+      }
+    } catch (e) { /* Ignore unavailable storage or invalid saved data. */ }
+
+    function menuBounds() {
+      return {
+        x: Math.max(0, window.innerWidth - 50),
+        y: Math.max(0, window.innerHeight - 50),
+      };
+    }
+
+    function placeMenu(x, y) {
+      const bounds = menuBounds();
+      x = Math.max(0, Math.min(bounds.x, x));
+      y = Math.max(0, Math.min(bounds.y, y));
+      menuBtn.style.right = "auto";
+      menuBtn.style.left = x + "px";
+      menuBtn.style.top = y + "px";
+      return { x: bounds.x ? x / bounds.x : 0, y: bounds.y ? y / bounds.y : 0 };
+    }
+
+    function restoreMenuPosition() {
+      const bounds = menuBounds();
+      if (menuPosition) {
+        menuPosition = placeMenu(menuPosition.x * bounds.x, menuPosition.y * bounds.y);
+      } else {
+        placeMenu(bounds.x - 20, 20);
+      }
+    }
+    restoreMenuPosition();
+    window.addEventListener("resize", restoreMenuPosition);
+
+    let drag = null;
+    let suppressClick = false;
+    menuBtn.addEventListener("pointerdown", (event) => {
+      if (!event.isPrimary || event.button !== 0) return;
+      const rect = menuBtn.getBoundingClientRect();
+      suppressClick = false;
+      drag = { id: event.pointerId, x: event.clientX, y: event.clientY,
+        left: rect.left, top: rect.top, moved: false };
+      menuBtn.setPointerCapture(event.pointerId);
+    });
+    menuBtn.addEventListener("pointermove", (event) => {
+      if (!drag || drag.id !== event.pointerId) return;
+      const dx = event.clientX - drag.x;
+      const dy = event.clientY - drag.y;
+      if (!drag.moved && Math.hypot(dx, dy) < 6) return;
+      drag.moved = true;
+      suppressClick = true;
+      menuPosition = placeMenu(drag.left + dx, drag.top + dy);
+    });
+    function finishMenuDrag(event) {
+      if (!drag || drag.id !== event.pointerId) return;
+      if (drag.moved) {
+        try { localStorage.setItem(menuPositionKey, JSON.stringify(menuPosition)); }
+        catch (e) { /* Dragging still works when storage is unavailable. */ }
+      }
+      drag = null;
+      if (menuBtn.hasPointerCapture(event.pointerId)) {
+        menuBtn.releasePointerCapture(event.pointerId);
+      }
+    }
+    menuBtn.addEventListener("pointerup", finishMenuDrag);
+    menuBtn.addEventListener("pointercancel", finishMenuDrag);
+    menuBtn.addEventListener("lostpointercapture", finishMenuDrag);
+    menuBtn.addEventListener("click", (event) => {
+      // A drag must not also open settings; keyboard activation still works.
+      if (suppressClick && event.detail !== 0) {
+        event.preventDefault();
+        return;
+      }
       toggleMenu();
     });
   </script>
