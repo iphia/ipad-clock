@@ -1,6 +1,6 @@
 // Bump this version whenever an app asset changes.
 const CACHE_PREFIX = 'ipad-clock-';
-const CACHE_NAME = CACHE_PREFIX + 'v18';
+const CACHE_NAME = CACHE_PREFIX + 'v22';
 const urlsToCache = [
   './',
   './index.html',
