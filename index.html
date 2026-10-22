@@ -29,17 +29,9 @@
       font-display: swap;
       src: url("fonts/NanumGothic-Bold.ttf") format("truetype");
     }
-:root {
-  --night-color: 120, 150, 230;      /* 밤 */
-  --dawn-color: 125, 160, 200;       /* 새벽 */
-  --morning-color: 190, 145, 100;    /* 아침 */
-  --noon-color: 220, 145, 115;       /* 낮: */
-  --afternoon-color: 180, 145, 125;  /* 오후 */
-  --evening-color: 110, 145, 200;    /* 저녁 */
-}
 
     body {
-      background-color: #000000;
+      background-color: #080d1b;
       margin: 0;
       height: 100vh;
       overflow: hidden;
@@ -65,59 +57,50 @@
       animation: fadeInEffect 0.4s ease-out forwards;
     }
 
-    /* --- 2. 배경 (크로스페이드용) --- */
-    #crossfade-bg {
+    /* Static gradients + opacity/transform only, including Safari on iOS 12. */
+    #ambient-bg {
       position: absolute;
       top: 50%;
       left: 50%;
-      /* 배경 원 크기를 800px에서 600px로 줄임 */
-      width: 600px;
-      height: 600px;
+      width: 960px;
+      height: 880px;
       transform: translate(-50%, -50%);
       z-index: 1;
-      opacity: 1;
-      transform-origin: center;
+      pointer-events: none;
     }
 
-    .bg-layer {
+    .ambient-glow {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      opacity: 0;
-      transition: opacity 5s ease;
-    }
-
-    /* 6구간 테마 */
-    #bg-dawn .petal {
-      background: radial-gradient(circle, rgba(var(--dawn-color), 0.3) 0%, rgba(var(--dawn-color), 0) 70%);
-    }
-    #bg-morning .petal {
-      background: radial-gradient(circle, rgba(var(--morning-color), 0.3) 0%, rgba(var(--morning-color), 0) 70%);
-    }
-    #bg-noon .petal {
-      background: radial-gradient(circle, rgba(var(--noon-color), 0.3) 0%, rgba(var(--noon-color), 0) 70%);
-    }
-    #bg-afternoon .petal {
-      background: radial-gradient(circle, rgba(var(--afternoon-color), 0.3) 0%, rgba(var(--afternoon-color), 0) 70%);
-    }
-    #bg-evening .petal {
-      background: radial-gradient(circle, rgba(var(--evening-color), 0.3) 0%, rgba(var(--evening-color), 0) 70%);
-    }
-    #bg-night .petal {
-      background: radial-gradient(circle, rgba(var(--night-color), 0.3) 0%, rgba(var(--night-color), 0) 70%);
-    }
-
-    .petal {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
       mix-blend-mode: screen;
-      transform-origin: center;
+      animation: ambientCycle 90s ease-in-out infinite;
+      will-change: opacity, transform;
+    }
+
+    .glow-aqua {
+      background: radial-gradient(ellipse 360px 330px at 38% 45%, rgba(64, 215, 236, 0.62) 0%, rgba(64, 215, 236, 0.48) 18%, rgba(64, 215, 236, 0.27) 38%, rgba(64, 215, 236, 0.11) 58%, rgba(64, 215, 236, 0.025) 78%, rgba(64, 215, 236, 0) 100%);
+    }
+    .glow-lilac {
+      background: radial-gradient(ellipse 360px 330px at 60% 40%, rgba(163, 140, 255, 0.62) 0%, rgba(163, 140, 255, 0.48) 18%, rgba(163, 140, 255, 0.27) 38%, rgba(163, 140, 255, 0.11) 58%, rgba(163, 140, 255, 0.025) 78%, rgba(163, 140, 255, 0) 100%);
+      animation-delay: -60s;
+    }
+    .glow-peach {
+      background: radial-gradient(ellipse 360px 330px at 52% 62%, rgba(255, 159, 125, 0.62) 0%, rgba(255, 159, 125, 0.48) 18%, rgba(255, 159, 125, 0.27) 38%, rgba(255, 159, 125, 0.11) 58%, rgba(255, 159, 125, 0.025) 78%, rgba(255, 159, 125, 0) 100%);
+      animation-delay: -30s;
+    }
+
+    @keyframes ambientCycle {
+      0%, 100% { opacity: 0.9; transform: translate(-16px, -10px) scale(1.04); }
+      33.333% { opacity: 0.18; transform: translate(20px, -6px) scale(0.96); }
+      66.667% { opacity: 0.18; transform: translate(-4px, 18px) scale(1.08); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ambient-glow { animation: none; opacity: 0.4; will-change: auto; }
+      .fade-animate { animation: none; }
     }
 
     /* --- 3. 시계 UI --- */
@@ -134,7 +117,7 @@
     }
 
     #date-display {
-      color: #dddddd;
+      color: #d4dff2;
       font-size: 30px;
       font-weight: 700;
       margin-bottom: 20px;
@@ -158,23 +141,12 @@
       text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
     }
 
-    .ampm-layer {
-      position: absolute;
-      top: 0;
-      left: 0;
+    #ampm-label {
+      color: #b9cbe9;
       font-size: 30px;
       font-weight: 700;
       white-space: nowrap;
-      transition: opacity 5s ease;
     }
-
-    /* 6구간 라벨 색상 */
-    #label-dawn { color: rgba(var(--dawn-color), 0.95); }
-    #label-morning { color: rgba(var(--morning-color), 0.95); }
-    #label-noon { color: rgba(var(--noon-color), 0.95); }
-    #label-afternoon { color: rgba(var(--afternoon-color), 0.95); }
-    #label-evening { color: rgba(var(--evening-color), 0.95); }
-    #label-night { color: rgba(var(--night-color), 0.95); }
 
     .card {
       color: #ffffff;
@@ -205,7 +177,7 @@
       right: 20px;
       width: 50px;
       height: 50px;
-      background: rgba(50, 50, 50, 0.5);
+      background: rgba(30, 43, 64, 0.65);
       border-radius: 50%;
       color: white;
       font-size: 24px;
@@ -221,7 +193,7 @@
       appearance: none;
       z-index: 200;
       cursor: pointer;
-      border: 1px solid #555;
+      border: 1px solid rgba(185, 203, 233, 0.25);
     }
 
     #controls {
@@ -230,12 +202,12 @@
       bottom: 80px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(20, 20, 20, 0.95);
+      background: rgba(16, 25, 43, 0.96);
       padding: 20px;
       border-radius: 10px;
       width: 80%;
       max-width: 300px;
-      border: 1px solid #444;
+      border: 1px solid rgba(185, 203, 233, 0.22);
       z-index: 300;
     }
 
@@ -243,7 +215,7 @@
       display: flex;
       justify-content: space-between;
       margin-bottom: 15px;
-      color: #ddd;
+      color: #d4dff2;
     }
 
     input[type="range"] {
@@ -255,7 +227,7 @@
       padding: 15px;
       border-radius: 8px;
       border: none;
-      background: #333;
+      background: #263854;
       color: white;
       margin-top: 5px;
     }
@@ -263,50 +235,16 @@
 </head>
 
 <body>
-  <div id="crossfade-bg">
-    <div class="bg-layer" id="bg-dawn" style="opacity: 1">
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
-    </div>
-    <div class="bg-layer" id="bg-morning">
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
-    </div>
-    <div class="bg-layer" id="bg-noon">
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
-    </div>
-    <div class="bg-layer" id="bg-afternoon">
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
-    </div>
-    <div class="bg-layer" id="bg-evening">
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
-    </div>
-    <div class="bg-layer" id="bg-night">
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
-    </div>
+  <div id="ambient-bg" aria-hidden="true">
+    <div class="ambient-glow glow-aqua"></div>
+    <div class="ambient-glow glow-lilac"></div>
+    <div class="ambient-glow glow-peach"></div>
   </div>
 
   <div id="clock-wrapper">
     <div id="date-display">0000. 00. 00</div>
     <div class="clock-container">
-      <div id="ampm">
-        <div class="ampm-layer" id="label-dawn" style="opacity: 1">오전</div>
-        <div class="ampm-layer" id="label-morning">오전</div>
-        <div class="ampm-layer" id="label-noon">오후</div>
-        <div class="ampm-layer" id="label-afternoon">오후</div>
-        <div class="ampm-layer" id="label-evening">오후</div>
-        <div class="ampm-layer" id="label-night">오전</div>
-      </div>
+      <div id="ampm"><span id="ampm-label">오전</span></div>
       <div class="card" id="h1">1</div>
       <div class="card" id="h2">2</div>
       <div class="card colon">:</div>
@@ -321,8 +259,8 @@
   <button id="menu-btn" type="button" aria-label="설정 열기" aria-controls="controls" aria-expanded="false" title="설정 · 드래그하여 이동">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" style="pointer-events: none">
       <path d="M4 7h16M4 17h16" />
-      <circle cx="9" cy="7" r="2.5" fill="#222" />
-      <circle cx="15" cy="17" r="2.5" fill="#222" />
+      <circle cx="9" cy="7" r="2.5" fill="#1e2b40" />
+      <circle cx="15" cy="17" r="2.5" fill="#1e2b40" />
     </svg>
   </button>
 
@@ -358,11 +296,6 @@
       );
     }
 
-    // --- [테스트용 변수] ---
-    // 현재 시간에 더할 시간(시 단위)을 여기에 입력해! 
-    // 예: 5를 입력하면 현재 시간보다 5시간 뒤의 테마와 시간이 나옴. (음수도 가능)
-    const timeOffsetHours = 0; 
-
     function updateElementWithFade(elementId, newValue) {
       const el = document.getElementById(elementId);
       if (!el) return;
@@ -379,9 +312,7 @@
 
     function updateClock() {
       const now = new Date();
-      
-      // 테스트용 오프셋 적용
-      now.setHours(now.getHours() + timeOffsetHours);
+
 
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -395,39 +326,7 @@
       const m = String(now.getMinutes()).padStart(2, "0");
       const s = String(now.getSeconds()).padStart(2, "0");
 
-      const bgIds = ["bg-dawn", "bg-morning", "bg-noon", "bg-afternoon", "bg-evening", "bg-night"];
-
-      function getThemeIdByHour(hour) {
-        if (hour >= 0 && hour < 3) return "bg-night";
-        if (hour >= 3 && hour < 7) return "bg-dawn";
-        if (hour >= 7 && hour < 12) return "bg-morning";
-        if (hour >= 12 && hour < 17) return "bg-noon";
-        if (hour >= 17 && hour < 21) return "bg-afternoon";
-        return "bg-evening";
-      }
-
-      const activeId = getThemeIdByHour(h);
-      bgIds.forEach((id) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.style.opacity = id === activeId ? "1" : "0";
-      });
-
-      const labelMap = {
-        "bg-dawn": "label-dawn",
-        "bg-morning": "label-morning",
-        "bg-noon": "label-noon",
-        "bg-afternoon": "label-afternoon",
-        "bg-evening": "label-evening",
-        "bg-night": "label-night",
-      };
-
-      Object.values(labelMap).forEach((labelId) => {
-        const el = document.getElementById(labelId);
-        if (!el) return;
-        el.style.opacity = labelId === labelMap[activeId] ? "1" : "0";
-      });
-
+      document.getElementById("ampm-label").innerText = h < 12 ? "오전" : "오후";
       h = h === 0 || h === 12 ? h : h % 12;
       const hStr = String(h).padStart(2, "0");
 
@@ -443,16 +342,18 @@
     updateClock();
 
     // UI 컨트롤 및 설정 저장 로직
-    const breathing = document.getElementById("crossfade-bg");
+    const breathing = document.getElementById("ambient-bg");
     const wrapper = document.getElementById("clock-wrapper");
     const sizeRange = document.getElementById("sizeRange");
     const xRange = document.getElementById("xRange");
     const yRange = document.getElementById("yRange");
 
-    // 저장된 설정 불러오기
-    if(localStorage.getItem('clockSize')) sizeRange.value = localStorage.getItem('clockSize');
-    if(localStorage.getItem('clockX')) xRange.value = localStorage.getItem('clockX');
-    if(localStorage.getItem('clockY')) yRange.value = localStorage.getItem('clockY');
+    // Safari can deny storage access; the clock and controls should still run.
+    try {
+      if(localStorage.getItem('clockSize')) sizeRange.value = localStorage.getItem('clockSize');
+      if(localStorage.getItem('clockX')) xRange.value = localStorage.getItem('clockX');
+      if(localStorage.getItem('clockY')) yRange.value = localStorage.getItem('clockY');
+    } catch (e) { /* Use defaults when storage is unavailable. */ }
 
     function addMultiListener(element, events, func) {
       events.split(" ").forEach((e) => element.addEventListener(e, func));
@@ -472,9 +373,11 @@
       breathing.style.transform = `translate(-50%, -50%) scale(${scale})`;
 
       // 설정값 브라우저에 저장
-      localStorage.setItem('clockSize', scale);
-      localStorage.setItem('clockX', x);
-      localStorage.setItem('clockY', y);
+      try {
+        localStorage.setItem('clockSize', scale);
+        localStorage.setItem('clockX', x);
+        localStorage.setItem('clockY', y);
+      } catch (e) { /* Controls also work without persistent storage. */ }
     }
 
     // 초기 적용
@@ -539,42 +442,89 @@
     restoreMenuPosition();
     window.addEventListener("resize", restoreMenuPosition);
 
+    // Touch Events are required on iOS 12 (Pointer Events arrived later).
     let drag = null;
     let suppressClick = false;
-    menuBtn.addEventListener("pointerdown", (event) => {
-      if (!event.isPrimary || event.button !== 0) return;
+    let lastTouchTime = 0;
+
+    function startMenuDrag(id, x, y) {
+      if (drag) return;
       const rect = menuBtn.getBoundingClientRect();
       suppressClick = false;
-      drag = { id: event.pointerId, x: event.clientX, y: event.clientY,
-        left: rect.left, top: rect.top, moved: false };
-      menuBtn.setPointerCapture(event.pointerId);
-    });
-    menuBtn.addEventListener("pointermove", (event) => {
-      if (!drag || drag.id !== event.pointerId) return;
-      const dx = event.clientX - drag.x;
-      const dy = event.clientY - drag.y;
-      if (!drag.moved && Math.hypot(dx, dy) < 6) return;
+      drag = { id: id, x: x, y: y, left: rect.left, top: rect.top, moved: false };
+    }
+    function moveMenuDrag(id, x, y) {
+      if (!drag || drag.id !== id) return;
+      const dx = x - drag.x;
+      const dy = y - drag.y;
+      if (!drag.moved && Math.sqrt(dx * dx + dy * dy) < 6) return;
       drag.moved = true;
       suppressClick = true;
       menuPosition = placeMenu(drag.left + dx, drag.top + dy);
-    });
-    function finishMenuDrag(event) {
-      if (!drag || drag.id !== event.pointerId) return;
+    }
+    function finishMenuDrag(id) {
+      if (!drag || drag.id !== id) return;
       if (drag.moved) {
         try { localStorage.setItem(menuPositionKey, JSON.stringify(menuPosition)); }
         catch (e) { /* Dragging still works when storage is unavailable. */ }
       }
       drag = null;
-      if (menuBtn.hasPointerCapture(event.pointerId)) {
-        menuBtn.releasePointerCapture(event.pointerId);
-      }
     }
-    menuBtn.addEventListener("pointerup", finishMenuDrag);
-    menuBtn.addEventListener("pointercancel", finishMenuDrag);
-    menuBtn.addEventListener("lostpointercapture", finishMenuDrag);
+    function findTouch(touches, id) {
+      for (let i = 0; i < touches.length; i++) {
+        if (touches[i].identifier === id) return touches[i];
+      }
+      return null;
+    }
+    menuBtn.addEventListener("touchstart", (event) => {
+      if (drag || event.touches.length !== 1) return;
+      // Handle taps ourselves to avoid synthetic mouse/click events on Safari.
+      event.preventDefault();
+      lastTouchTime = Date.now();
+      const touch = event.changedTouches[0];
+      startMenuDrag(touch.identifier, touch.clientX, touch.clientY);
+    }, { passive: false });
+    window.addEventListener("touchmove", (event) => {
+      if (!drag || drag.id === "mouse") return;
+      const touch = findTouch(event.changedTouches, drag.id);
+      if (!touch) return;
+      event.preventDefault();
+      moveMenuDrag(touch.identifier, touch.clientX, touch.clientY);
+    }, { passive: false });
+    window.addEventListener("touchend", (event) => {
+      if (!drag || drag.id === "mouse") return;
+      const touch = findTouch(event.changedTouches, drag.id);
+      if (!touch) return;
+      event.preventDefault();
+      lastTouchTime = Date.now();
+      const tapped = !drag.moved;
+      finishMenuDrag(touch.identifier);
+      if (tapped) toggleMenu();
+    }, { passive: false });
+    window.addEventListener("touchcancel", (event) => {
+      if (!drag || !findTouch(event.changedTouches, drag.id)) return;
+      lastTouchTime = Date.now();
+      suppressClick = true;
+      finishMenuDrag(drag.id);
+    });
+    menuBtn.addEventListener("mousedown", (event) => {
+      if (event.button !== 0 || Date.now() - lastTouchTime < 800) return;
+      event.preventDefault();
+      startMenuDrag("mouse", event.clientX, event.clientY);
+    });
+    window.addEventListener("mousemove", (event) => {
+      moveMenuDrag("mouse", event.clientX, event.clientY);
+    });
+    window.addEventListener("mouseup", () => finishMenuDrag("mouse"));
+    window.addEventListener("blur", () => {
+      if (drag) {
+        suppressClick = true;
+        finishMenuDrag(drag.id);
+      }
+    });
     menuBtn.addEventListener("click", (event) => {
-      // A drag must not also open settings; keyboard activation still works.
-      if (suppressClick && event.detail !== 0) {
+      // Keep keyboard activation, but ignore clicks synthesized after a touch/drag.
+      if (event.detail !== 0 && (suppressClick || Date.now() - lastTouchTime < 800)) {
         event.preventDefault();
         return;
       }
