@@ -65,7 +65,7 @@
       width: 960px;
       height: 880px;
       transform: translate(-50%, -50%);
-      z-index: 1;
+      z-index: -1;
       pointer-events: none;
     }
 
@@ -106,7 +106,7 @@
     /* --- 3. 시계 UI --- */
     #clock-wrapper {
       position: absolute;
-      top: 50%;
+      top: 70%;
       left: 50%;
       transform: translate(-50%, -50%);
       display: flex;
@@ -116,16 +116,94 @@
       z-index: 10;
     }
 
+    #calendar-row {
+      position: absolute;
+      left: 50%;
+      top: 35%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      z-index: 11;
+    }
+    .side-calendar {
+      width: 180px;
+      margin: 0 16px;
+      color: #a7adbb;
+    }
+    .side-calendar table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      text-align: center;
+    }
+    .side-calendar caption {
+      color: #b8becb;
+      font-size: 15px;
+      padding-bottom: 12px;
+    }
+    .side-calendar th { font-size: 11px; font-weight: 400; height: 24px; }
+    .side-calendar td { font-size: 12px; height: 26px; padding: 0; }
+    #calendar {
+      width: 420px;
+      box-sizing: border-box;
+      padding: 20px 24px 16px;
+      margin-bottom: 0;
+      color: #d4dff2;
+    }
+    #calendar table {
+      width: 90%;
+      margin: 0 auto;
+      table-layout: fixed;
+      border-collapse: collapse;
+      text-align: center;
+    }
+    #calendar-title {
+      color: #e1e9f8;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding-bottom: 16px;
+    }
+    #calendar th {
+      height: 28px;
+      font-size: 13px;
+      font-weight: 400;
+      color: #9eafca;
+    }
+    #calendar td { height: 28px; padding: 0; font-size: 16px; }
+    #calendar .sunday { color: #f0b7ad; }
+    #calendar .saturday { color: #acccf5; }
+    #calendar .calendar-day {
+      display: inline-block;
+      width: 26px;
+      height: 26px;
+      line-height: 26px;
+      border-radius: 50%;
+    }
+    #calendar .today .calendar-day {
+      color: #f5f8ff;
+      font-weight: 700;
+      background: rgba(163, 140, 255, 0.4);
+      box-shadow: inset 0 0 0 1px rgba(216, 207, 255, 0.6);
+    }
+
+    @media (max-width: 850px) {
+      #calendar { width: 380px; }
+      .side-calendar { width: 152px; margin: 0 10px; }
+    }
+
     #date-display {
       color: #d4dff2;
-      font-size: 30px;
+      font-size: 22px;
       font-weight: 700;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
       letter-spacing: 1px;
       text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
     }
 
     .clock-container {
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -206,7 +284,11 @@
       padding: 20px;
       border-radius: 10px;
       width: 80%;
-      max-width: 300px;
+      max-width: 520px;
+      box-sizing: border-box;
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       border: 1px solid rgba(185, 203, 233, 0.22);
       z-index: 300;
     }
@@ -218,8 +300,58 @@
       color: #d4dff2;
     }
 
+    .control-columns {
+      display: flex;
+      margin: 0 -10px;
+    }
+    .control-column {
+      width: 50%;
+      min-width: 0;
+      box-sizing: border-box;
+      padding: 0 10px;
+    }
+    .control-column .control-row {
+      flex-direction: column;
+    }
+    .control-row label {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
     input[type="range"] {
-      width: 60%;
+      width: 100%;
+      margin: 0;
+      min-height: 28px;
+    }
+    .control-column .vertical-control {
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+    }
+    .vertical-control label {
+      margin: 0 12px 0 0;
+      white-space: nowrap;
+    }
+    .vertical-slider {
+      position: relative;
+      width: 44px;
+      height: 140px;
+      flex-shrink: 0;
+    }
+    /* Rotate a native horizontal range for Safari on iOS 12.
+       +90deg puts minimum (top: 0%) at the top, maximum at the bottom. */
+    .vertical-slider input[type="range"] {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 128px;
+      height: 32px;
+      transform: translate(-50%, -50%) rotate(90deg);
+    }
+    .shared-control {
+      flex-direction: column;
+      align-items: center;
+      width: 70%;
+      margin: 4px auto 18px;
     }
 
     button {
@@ -235,15 +367,41 @@
 </head>
 
 <body>
-  <div id="ambient-bg" aria-hidden="true">
+    <div id="calendar-row">
+      <section class="side-calendar" aria-label="이전 달 달력">
+        <table>
+          <caption id="previous-calendar-title"></caption>
+          <thead><tr><th scope="col">일</th><th scope="col">월</th><th scope="col">화</th><th scope="col">수</th><th scope="col">목</th><th scope="col">금</th><th scope="col">토</th></tr></thead>
+          <tbody id="previous-calendar-days"></tbody>
+        </table>
+      </section>
+    <section id="calendar" aria-label="이번 달 달력">
+      <table>
+        <caption id="calendar-title"></caption>
+        <thead><tr>
+          <th scope="col" class="sunday">일</th><th scope="col">월</th>
+          <th scope="col">화</th><th scope="col">수</th><th scope="col">목</th>
+          <th scope="col">금</th><th scope="col" class="saturday">토</th>
+        </tr></thead>
+        <tbody id="calendar-days"></tbody>
+      </table>
+    </section>
+      <section class="side-calendar" aria-label="다음 달 달력">
+        <table>
+          <caption id="next-calendar-title"></caption>
+          <thead><tr><th scope="col">일</th><th scope="col">월</th><th scope="col">화</th><th scope="col">수</th><th scope="col">목</th><th scope="col">금</th><th scope="col">토</th></tr></thead>
+          <tbody id="next-calendar-days"></tbody>
+        </table>
+      </section>
+    </div>
+  <div id="clock-wrapper">
+    <div id="date-display">0000. 00. 00</div>
+    <div class="clock-container">
+      <div id="ambient-bg" aria-hidden="true">
     <div class="ambient-glow glow-aqua"></div>
     <div class="ambient-glow glow-lilac"></div>
     <div class="ambient-glow glow-peach"></div>
   </div>
-
-  <div id="clock-wrapper">
-    <div id="date-display">0000. 00. 00</div>
-    <div class="clock-container">
       <div id="ampm"><span id="ampm-label">오전</span></div>
       <div class="card" id="h1">1</div>
       <div class="card" id="h2">2</div>
@@ -265,17 +423,35 @@
   </button>
 
   <div id="controls">
+    <div class="control-columns">
+      <div class="control-column">
     <div class="control-row">
-      <span>크기</span>
+      <label for="sizeRange">시계 크기</label>
       <input type="range" id="sizeRange" min="0.4" max="2.0" step="0.01" value="1.0" />
     </div>
-    <div class="control-row">
-      <span>가로</span>
-      <input type="range" id="xRange" min="0" max="100" value="50" />
+    <div class="control-row vertical-control">
+      <label for="yRange">시계 세로</label>
+      <div class="vertical-slider">
+        <input type="range" id="yRange" min="0" max="100" value="70" aria-orientation="vertical" />
+      </div>
     </div>
+      </div>
+      <div class="control-column">
     <div class="control-row">
-      <span>세로</span>
-      <input type="range" id="yRange" min="0" max="100" value="50" />
+      <label for="calendarSizeRange">달력 크기</label>
+      <input type="range" id="calendarSizeRange" min="0.4" max="2.0" step="0.01" value="1.0" />
+    </div>
+    <div class="control-row vertical-control">
+      <label for="calendarYRange">달력 세로</label>
+      <div class="vertical-slider">
+        <input type="range" id="calendarYRange" min="0" max="100" value="35" aria-orientation="vertical" />
+      </div>
+    </div>
+      </div>
+    </div>
+    <div class="control-row shared-control">
+      <label for="xRange">공통 가로</label>
+      <input type="range" id="xRange" min="0" max="100" value="50" />
     </div>
     <button id="reset-btn" type="button" onclick="resetLayout()">위치·크기 초기화</button>
     <button id="close-btn" onclick="toggleMenu()">닫기</button>
@@ -311,9 +487,50 @@
 
     const dayNames = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
 
+    // Local calendar arithmetic: no server, locale package, or network needed.
+    let calendarDayKey = "";
+    function updateCalendar(now) {
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const today = now.getDate();
+      const key = year + "-" + month + "-" + today;
+      if (key === calendarDayKey) return;
+      renderCalendarMonth("previous-calendar", year, month - 1, 0);
+      renderCalendarMonth("calendar", year, month, today);
+      renderCalendarMonth("next-calendar", year, month + 1, 0);
+      calendarDayKey = key;
+    }
+
+    function renderCalendarMonth(prefix, year, month, today) {
+      const first = new Date(year, month, 1);
+      year = first.getFullYear();
+      month = first.getMonth();
+      const firstWeekday = first.getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      let rows = "";
+      // Six rows keep the clock in place when the month changes.
+      for (let row = 0; row < 6; row++) {
+        rows += "<tr>";
+        for (let column = 0; column < 7; column++) {
+          const day = row * 7 + column - firstWeekday + 1;
+          if (day < 1 || day > daysInMonth) {
+            rows += '<td aria-hidden="true"></td>';
+          } else {
+            const weekend = column === 0 ? "sunday" : column === 6 ? "saturday" : "";
+            const isToday = day === today;
+            rows += '<td class="' + weekend + (isToday ? ' today' : '') + '"' +
+              (isToday ? ' aria-current="date"' : '') + '><span class="calendar-day">' + day + '</span></td>';
+          }
+        }
+        rows += "</tr>";
+      }
+      document.getElementById(prefix + "-title").textContent = year + "년 " + (month + 1) + "월";
+      document.getElementById(prefix + "-days").innerHTML = rows;
+    }
+
     function updateClock() {
       const now = new Date();
-
+      updateCalendar(now);
 
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -340,20 +557,34 @@
     }
 
     setInterval(updateClock, 1000);
+    window.addEventListener("pageshow", updateClock);
+    window.addEventListener("focus", updateClock);
     updateClock();
 
     // UI 컨트롤 및 설정 저장 로직
-    const breathing = document.getElementById("ambient-bg");
     const wrapper = document.getElementById("clock-wrapper");
     const sizeRange = document.getElementById("sizeRange");
     const xRange = document.getElementById("xRange");
     const yRange = document.getElementById("yRange");
+    const calendarWrapper = document.getElementById("calendar-row");
+    const calendarSizeRange = document.getElementById("calendarSizeRange");
+    const calendarYRange = document.getElementById("calendarYRange");
 
     // Safari can deny storage access; the clock and controls should still run.
     try {
       if(localStorage.getItem('clockSize')) sizeRange.value = localStorage.getItem('clockSize');
       if(localStorage.getItem('clockX')) xRange.value = localStorage.getItem('clockX');
-      if(localStorage.getItem('clockY')) yRange.value = localStorage.getItem('clockY');
+      if (localStorage.getItem('splitLayout') === '1') {
+        if(localStorage.getItem('clockY')) yRange.value = localStorage.getItem('clockY');
+        if(localStorage.getItem('calendarSize')) calendarSizeRange.value = localStorage.getItem('calendarSize');
+        if(localStorage.getItem('calendarY')) calendarYRange.value = localStorage.getItem('calendarY');
+      } else {
+        // Preserve shared settings while separating the old group's vertical position.
+        const oldY = Number(localStorage.getItem('clockY') || '50');
+        yRange.value = String(Math.max(0, Math.min(100, oldY + 20)));
+        calendarYRange.value = String(Math.max(0, Math.min(100, oldY - 15)));
+        calendarSizeRange.value = sizeRange.value;
+      }
     } catch (e) { /* Use defaults when storage is unavailable. */ }
 
     function addMultiListener(element, events, func) {
@@ -369,15 +600,18 @@
       wrapper.style.top = y + "%";
       wrapper.style.transform = `translate(-50%, -50%) scale(${scale})`;
 
-      breathing.style.left = x + "%";
-      breathing.style.top = y + "%";
-      breathing.style.transform = `translate(-50%, -50%) scale(${scale})`;
+      calendarWrapper.style.left = x + "%";
+      calendarWrapper.style.top = calendarYRange.value + "%";
+      calendarWrapper.style.transform = `translate(-50%, -50%) scale(${calendarSizeRange.value})`;
 
       // 설정값 브라우저에 저장
       try {
         localStorage.setItem('clockSize', scale);
         localStorage.setItem('clockX', x);
         localStorage.setItem('clockY', y);
+        localStorage.setItem('calendarSize', calendarSizeRange.value);
+        localStorage.setItem('calendarY', calendarYRange.value);
+        localStorage.setItem('splitLayout', '1');
       } catch (e) { /* Controls also work without persistent storage. */ }
     }
 
@@ -387,6 +621,17 @@
     addMultiListener(sizeRange, "input change", updateTransform);
     addMultiListener(xRange, "input change", updateTransform);
     addMultiListener(yRange, "input change", updateTransform);
+    addMultiListener(calendarSizeRange, "input change", updateTransform);
+    addMultiListener(calendarYRange, "input change", updateTransform);
+    [yRange, calendarYRange].forEach((slider) => {
+      slider.addEventListener("keydown", (event) => {
+        if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+        event.preventDefault();
+        const step = event.key === "ArrowUp" ? -1 : 1;
+        slider.value = String(Math.max(0, Math.min(100, Number(slider.value) + step)));
+        updateTransform();
+      });
+    });
 
     const controls = document.getElementById("controls");
     const menuBtn = document.getElementById("menu-btn");
@@ -446,7 +691,9 @@
     function resetLayout() {
       sizeRange.value = "1";
       xRange.value = "50";
-      yRange.value = "50";
+      yRange.value = "70";
+      calendarSizeRange.value = "1";
+      calendarYRange.value = "35";
       updateTransform();
       menuPosition = null;
       restoreMenuPosition();
