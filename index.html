@@ -277,6 +277,7 @@
       <span>세로</span>
       <input type="range" id="yRange" min="0" max="100" value="50" />
     </div>
+    <button id="reset-btn" type="button" onclick="resetLayout()">위치·크기 초기화</button>
     <button id="close-btn" onclick="toggleMenu()">닫기</button>
   </div>
 
@@ -441,6 +442,18 @@
     }
     restoreMenuPosition();
     window.addEventListener("resize", restoreMenuPosition);
+
+    function resetLayout() {
+      sizeRange.value = "1";
+      xRange.value = "50";
+      yRange.value = "50";
+      updateTransform();
+      menuPosition = null;
+      restoreMenuPosition();
+      try { localStorage.removeItem(menuPositionKey); }
+      catch (e) { /* Reset still applies when storage is unavailable. */ }
+    }
+
 
     // Touch Events are required on iOS 12 (Pointer Events arrived later).
     let drag = null;
